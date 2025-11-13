@@ -5,6 +5,7 @@ import 'package:todo/view/sign%20in/components/signin_input_form.dart';
 import 'package:todo/view/sign%20up/sign_up.dart';
 import '../../../res/constants.dart';
 import '../../../view_model/controller/signin_controller.dart';
+import '../../shared/sync_mode_switch.dart';
 import '../../sign up/components/button.dart';
 import '../../sign up/components/signup_options.dart';
 
@@ -26,6 +27,8 @@ class SignInBody extends StatelessWidget {
             const SizedBox(
               height: 50,
             ),
+            SyncModeSwitch(),
+            const SizedBox(height: 10,),
             const Text(
               'Sign in with one of the following options.',
               style: TextStyle(color: Colors.black87),
@@ -33,7 +36,7 @@ class SignInBody extends StatelessWidget {
             const SizedBox(
               height: 20,
             ),
-            const SignUpOptions(),
+            SignUpOptions(),
             SignInForm(),
             Obx(
               () => AccountButton(

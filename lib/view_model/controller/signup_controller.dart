@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 
+import '../../data/local/local_auth_service.dart';
 import '../../data/network/firebase/firebase_services.dart';
 import '../../util/utils.dart';
+import 'settings_controller.dart';
 
 class SignupController extends GetxController{
   RxBool nameFocus=false.obs;
@@ -13,10 +15,11 @@ class SignupController extends GetxController{
   RxBool correctName=false.obs;
   RxBool showPassword=true.obs;
   RxBool loading=false.obs;
-  // final FirebaseServices firebase=FirebaseServices();
   final email=TextEditingController().obs;
   final name=TextEditingController().obs;
   final password=TextEditingController().obs;
+  final SettingsController settingsController =
+      Get.find<SettingsController>();
   void validateEmail(){
     correctEmail.value=Utils.validateEmail(email.value.text.toString());
   }
@@ -37,6 +40,10 @@ class SignupController extends GetxController{
     }
     if(password.value.text.toString().length<6){
       Utils.showSnackBar('Warning', 'Password length should greater than 5', const Icon(FontAwesomeIcons.triangleExclamation,color: Colors.pink,));
+      return;
+    }
+    if (settingsController.useLocalOnly.value) {
+      _createLocalAccount();
       return;
     }
     FirebaseService.createAccount();
@@ -63,7 +70,13 @@ class SignupController extends GetxController{
     passwordFocus.value=false;
     FocusScope.of(context).unfocus();
   }
-
-
-
+  Future<void> _createLocalAccount() async {
+    setLoading(true);
+    await LocalAuthService.createAccount(
+      name: name.value.text.trim(),
+      email: email.value.text.trim(),
+      password: password.value.text.trim(),
+    );
+    setLoading(false);
+  }
 }
