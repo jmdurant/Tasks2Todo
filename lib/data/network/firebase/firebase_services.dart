@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import '../../../model/task_model.dart';
 import '../../../util/utils.dart';
 import '../../../view/home/home.dart';
 import '../../../view_model/controller/signin_controller.dart';
@@ -140,72 +139,67 @@ class FirebaseService {
       signInController.setLoading(true);
     }
   }
-  static Future<void> signInwWithGoogle()async{
-    try{
-      final GoogleSignIn googleSignIn = GoogleSignIn();
-      googleSignIn.signIn().then((GoogleSignInAccount? googleSignInAccount) async {
-        if (googleSignInAccount != null) {
-          // Get the GoogleSignInAuthentication object
-          final GoogleSignInAuthentication googleSignInAuthentication =
-          await googleSignInAccount.authentication;
-          // Create an AuthCredential object
-          final AuthCredential credential = GoogleAuthProvider.credential(
-            idToken: googleSignInAuthentication.idToken,
-            accessToken: googleSignInAuthentication.accessToken,
-          );
-
-          await auth.signInWithCredential(credential).then((value) {
-            final String str = value.user!.email.toString();
-            final String node = str.substring(0, str.indexOf('@'));
-            database.ref('Accounts').child(node).set({
-              'name' : value.user!.displayName,
-              'email' : value.user!.email,
-            }).then((val) {
-              Utils.showSnackBar(
-                  'Login',
-                  'Successfully Login',
-                  const Icon(
-                    FontAwesomeIcons.triangleExclamation,
-                    color: Colors.red,
-                  ));
-              UserPref.setUser(
-                  value.user!.displayName!,
-                  value.user!.email!,
-                  "NOPASSWORD",
-                  node,
-                  value.user!.uid);
-            }).onError((error, stackTrace) {
-              Utils.showSnackBar(
-                  'Error',
-                  Utils.extractFirebaseError(error.toString()),
-                  const Icon(
-                    FontAwesomeIcons.triangleExclamation,
-                    color: Colors.red,
-                  ));
-              return;
-            });
-          }).onError((error, stackTrace) {
-            Utils.showSnackBar(
-                'Error',
-                Utils.extractFirebaseError(error.toString()),
-                const Icon(
-                  FontAwesomeIcons.triangleExclamation,
-                  color: Colors.red,
-                ));
-            return;
-          });
-        }
-      }).onError((error, stackTrace) {
+  static Future<void> signInWithGoogle() async {
+    try {
+      final GoogleSignInAccount account = await GoogleSignIn.instance
+          .authenticate(scopeHint: const <String>['email']);
+      final GoogleSignInAuthentication authentication = account.authentication;
+      if (authentication.idToken == null) {
         Utils.showSnackBar(
             'Error',
-            Utils.extractFirebaseError(error.toString()),
+            'Unable to fetch credentials from Google. Please try again.',
             const Icon(
               FontAwesomeIcons.triangleExclamation,
               color: Colors.red,
             ));
         return;
+      }
+      final OAuthCredential credential = GoogleAuthProvider.credential(
+        idToken: authentication.idToken,
+      );
+      final UserCredential userCredential =
+          await auth.signInWithCredential(credential);
+      final User? user = userCredential.user;
+      if (user == null || user.email == null) {
+        Utils.showSnackBar(
+            'Error',
+            'Google account is missing required information.',
+            const Icon(
+              FontAwesomeIcons.triangleExclamation,
+              color: Colors.red,
+            ));
+        return;
+      }
+      final String email = user.email!;
+      final String node = email.substring(0, email.indexOf('@'));
+      await database.ref('Accounts').child(node).set({
+        'name': user.displayName ?? account.displayName ?? email,
+        'email': email,
       });
-    }catch(e){
+      UserPref.setUser(
+        user.displayName ?? account.displayName ?? email,
+        email,
+        "NOPASSWORD",
+        node,
+        user.uid,
+      );
+      Utils.showSnackBar(
+          'Login',
+          'Successfully logged in with Google.',
+          const Icon(
+            Icons.done,
+            color: Colors.white,
+          ));
+      Get.to(HomePage());
+    } on GoogleSignInException catch (error) {
+      Utils.showSnackBar(
+          'Error',
+          error.description ?? 'Google sign-in was cancelled.',
+          const Icon(
+            FontAwesomeIcons.triangleExclamation,
+            color: Colors.red,
+          ));
+    } catch (e) {
       Utils.showSnackBar(
           'Error',
           Utils.extractFirebaseError(e.toString()),

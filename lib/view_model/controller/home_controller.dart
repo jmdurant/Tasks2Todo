@@ -1,7 +1,7 @@
-import 'package:connectivity/connectivity.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
-import 'package:todo/db_helper/dbHelper.dart';
+import 'package:todo/db_helper/db_helper.dart';
 import 'package:todo/util/utils.dart';
 import '../../data/shared pref/shared_pref.dart';
 

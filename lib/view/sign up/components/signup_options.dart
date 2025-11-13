@@ -10,7 +10,7 @@ class SignUpOptions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return   GestureDetector(
-      onTap: () => FirebaseService.signInwWithGoogle(),
+      onTap: () => FirebaseService.signInWithGoogle(),
       child: const IconContainer(
           widget: Row(
             crossAxisAlignment: CrossAxisAlignment.center,

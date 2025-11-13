@@ -62,9 +62,19 @@ This app utilizes the following dependencies:
 
 - **intl: ^0.18.1**: Provides internationalization and localization support, making your app accessible to users from different regions.
 
-- **sqflite: ^2.3.0**: Offers local database capabilities, enabling offline access and data storage even when the app is not connected to the internet.
+- **drift: ^2.29.0** along with **sqlite3_flutter_libs**: Provides a type-safe, reactive layer over SQLite for reliable offline storage with compile-time query validation.
 
 - **connectivity: ^3.0.6**: Monitors network connectivity, allowing you to adapt your app's behavior based on the user's internet status.
+
+## Local Database Schema
+
+The Drift-powered SQLite database (`paper2todo.db`) now contains three tables so it can interoperate with richer capture pipelines:
+
+- **Tasks**: Existing scheduler records (`key`, `title`, `category`, `description`, `image`, `periority`, `startTime`, `endTime`, `date`, `show`, `status`).
+- **CaptureSessions**: Mirrors inbound capture jobs from external sources with fields for `capturedAt`, `imageFilePath`, `syncStatus`, `syncError`, and the raw AI payload.
+- **ParsedItems**: Stores the AI-parsed todos linked to their capture session (`sessionId` foreign key), plus metadata such as `type`, `content`, JSON-encoded `tags`, `dueDate`/`dueTime`, `priority`, `location`, `parentProject`, `status`, `confidence`, `note`, and `externalId`.
+
+Dedicated DAOs (`TaskDao`, `CaptureSessionDao`, `ParsedItemDao`) expose CRUD, sync-status helpers, and reactive streams, so merging data from other projects only requires wiring those DAOs into your controllers or sync services.
 
 ## Contributions
 
