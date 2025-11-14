@@ -32,6 +32,16 @@
   <title>todo</title>
   <link rel="manifest" href="manifest.json">
 
+  <!-- Debug-only sql.js loader (release builds use sqlite3.wasm directly) -->
+  <script>
+    window.sqlJsConfig = {
+      locateFile: function(file) {
+        return 'https://cdn.jsdelivr.net/npm/sql.js@1.9.0/dist/' + file;
+      }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/sql.js@1.9.0/dist/sql-wasm.js"></script>
+
   <script>
     // The value below is injected by flutter build, do not touch.
     var serviceWorkerVersion = null;
