@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../res/constants.dart';
 import '../../../view_model/controller/new_task_controller.dart';
 
 class TextInputField extends StatelessWidget {
@@ -25,7 +24,9 @@ class TextInputField extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
-          color: focus ? darkOrange : Colors.grey),
+          color: focus
+              ? Theme.of(context).colorScheme.primary
+              : Theme.of(context).colorScheme.surfaceVariant),
       child: TextFormField(
         controller: controller,
         onTapOutside: (event) {
@@ -34,14 +35,14 @@ class TextInputField extends StatelessWidget {
         },
         onTap: onTap,
         decoration: InputDecoration(
-          contentPadding: EdgeInsets.symmetric(horizontal: 20),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20),
           hintText: hint,
-          fillColor: Colors.white,
+          fillColor: Theme.of(context).colorScheme.surface,
           filled: true,
           border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide.none),
-          hintStyle: TextStyle(color: Colors.grey, fontSize: 12),
+          hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12),
         ),
       ),
     );

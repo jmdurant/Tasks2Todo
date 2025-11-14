@@ -24,7 +24,7 @@ class _SplashViewState extends State<SplashView> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            SplashImage(),
+            const SplashImage(),
             const SizedBox(height: defaultPadding/1.5,),
             TweenAnimationBuilder(
                 tween: Tween(begin: 0.0,end: 1.0),
@@ -39,17 +39,19 @@ class _SplashViewState extends State<SplashView> {
                           borderRadius: BorderRadius.circular(20),
                           child: LinearProgressIndicator(
                             value: value,
-                            color: Colors.orange,
-                            backgroundColor: neviBlue,
+                            color: Theme.of(context).colorScheme.primary,
+                            backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
 
                           ),
                         ),
                       ),
                       SizedBox(height: defaultPadding/3,),
-                      Text('${(value*100).toInt().toString()}%',style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold
-                      ),)
+                      Text(
+                        '${(value*100).toInt().toString()}%',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      )
                     ],
                   );
                 },)
@@ -93,29 +95,29 @@ class _SplashImageState extends State<SplashImage> with SingleTickerProviderStat
           decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(30),
               gradient: LinearGradient(colors: [
-                darkOrange,
-                Colors.pinkAccent,
-                Colors.amber,
+                Theme.of(context).colorScheme.primary,
+                Theme.of(context).colorScheme.secondary,
+                Theme.of(context).colorScheme.tertiary ?? Theme.of(context).colorScheme.secondary,
               ]),
               boxShadow: [
                 BoxShadow(
-                    offset: Offset(0,2),
-                    color: darkOrange.withOpacity(.5),
+                    offset: const Offset(0,2),
+                    color: Theme.of(context).colorScheme.primary.withOpacity(.5),
                     blurRadius: 10
                 ),
                 BoxShadow(
-                    offset: Offset(0,-2),
-                    color: Colors.pink.withOpacity(.5),
+                    offset: const Offset(0,-2),
+                    color: Theme.of(context).colorScheme.secondary.withOpacity(.3),
                     blurRadius: 10
                 ),
                 BoxShadow(
-                    offset: Offset(2,0),
-                    color: lightOrange.withOpacity(.5),
+                    offset: const Offset(2,0),
+                    color: Theme.of(context).colorScheme.primaryContainer.withOpacity(.4),
                     blurRadius: 10
                 ),
                 BoxShadow(
-                    offset: Offset(-2,0),
-                    color: lightOrange.withOpacity(.5),
+                    offset: const Offset(-2,0),
+                    color: Theme.of(context).colorScheme.primaryContainer.withOpacity(.4),
                     blurRadius: 10
                 )
               ]
@@ -123,7 +125,7 @@ class _SplashImageState extends State<SplashImage> with SingleTickerProviderStat
           child: Container(
             padding: EdgeInsets.all(10),
             decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(30)
             ),
             child: Image.asset('assets/images/splashImage.png',fit: BoxFit.cover,),

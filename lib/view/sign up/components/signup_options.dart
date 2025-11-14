@@ -14,13 +14,14 @@ class SignUpOptions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     if (!settingsController.firebaseAvailable) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.orangeAccent),
+          border: Border.all(color: scheme.primary),
         ),
         child: const Text(
           'Firebase disabled in this build. Enable USE_FIREBASE to sign in with Google.',
@@ -35,7 +36,7 @@ class SignUpOptions extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.orangeAccent),
+            border: Border.all(color: scheme.primary),
           ),
           child: const Text(
             'Enable cloud sync to use Google sign-in.',
@@ -45,7 +46,7 @@ class SignUpOptions extends StatelessWidget {
       }
       return GestureDetector(
         onTap: () => FirebaseService.signInWithGoogle(),
-        child: const IconContainer(
+        child: IconContainer(
             widget: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.center,
@@ -53,9 +54,9 @@ class SignUpOptions extends StatelessWidget {
                 Icon(
                 FontAwesomeIcons.google,
                   size: 18,
-                  color: Colors.orange,
+                  color: scheme.primary,
                 ),
-                SizedBox(width: 10,),
+                const SizedBox(width: 10,),
                 Text('Continue with Google'),
               ],
             )),

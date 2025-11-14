@@ -20,16 +20,16 @@ class SelectImageList extends StatelessWidget {
             width: 100,
             decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                gradient: const LinearGradient(colors: [
-                  lightOrange,
-                  darkOrange
+                gradient: LinearGradient(colors: [
+                  Theme.of(context).colorScheme.primary,
+                  Theme.of(context).colorScheme.secondary
                 ])
             ),
           ),
         ),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 20,vertical: 10),
-          child: Text('Illustrations',style: TextStyle(color: Colors.black,fontWeight: FontWeight.w600,fontSize: 20),),
+          child: Text('Illustrations',style: TextStyle(fontWeight: FontWeight.w600,fontSize: 20),),
         ),
         SizedBox(
           height: 120,
@@ -50,27 +50,27 @@ class SelectImageList extends StatelessWidget {
                             padding: const EdgeInsets.all(2),
                             decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(20),
-                                gradient: controller.selectedImage.value==index? const LinearGradient(
+                                gradient: controller.selectedImage.value==index? LinearGradient(
                                     colors: [
-                                      lightAccentBlue,
-                                      lightAccentBlue,
+                                      Theme.of(context).colorScheme.secondary,
+                                      Theme.of(context).colorScheme.secondaryContainer,
                                     ]
                                 ): null,
-                                boxShadow: controller.selectedImage.value==index ? const [
+                                boxShadow: controller.selectedImage.value==index ? [
                                   BoxShadow(
-                                    color: lightAccentBlue,
+                                    color: Theme.of(context).colorScheme.secondary.withOpacity(.4),
                                     blurRadius: 10,
-                                    offset: Offset(0, 5),
+                                    offset: const Offset(0, 5),
                                   ),
                                 ] : null
                             ),
                             child: Container(
                                 decoration: BoxDecoration(
-                                    color: Colors.white,
+                                    color: Theme.of(context).colorScheme.surface,
                                     borderRadius: BorderRadius.circular(20)
                                 ),
                                 child: Image.asset(Utils.images['$index'],height: 80,width: 80,))),),
-                        Obx(() => controller.selectedImage.value==index ? const Icon(Icons.keyboard_arrow_up,color: Colors.orange) : const SizedBox(),)
+                        Obx(() => controller.selectedImage.value==index ? Icon(Icons.keyboard_arrow_up,color: Theme.of(context).colorScheme.primary) : const SizedBox(),)
                       ],
                     )),
               );

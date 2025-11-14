@@ -18,10 +18,12 @@ class DateTimeInput extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Date',
-                style:
-                    TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                style: Theme.of(context)
+                    .textTheme
+                    .labelLarge
+                    ?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(
                 height: defaultPadding / 2,
@@ -38,10 +40,12 @@ class DateTimeInput extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'S-Time',
-                style:
-                    TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                style: Theme.of(context)
+                    .textTheme
+                    .labelLarge
+                    ?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(
                 height: defaultPadding / 2,
@@ -58,10 +62,12 @@ class DateTimeInput extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'E-Time',
-                style:
-                    TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                style: Theme.of(context)
+                    .textTheme
+                    .labelLarge
+                    ?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(
                 height: defaultPadding / 2,
@@ -87,23 +93,27 @@ class DateTimeContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.grey.withOpacity(.2),
+        color: scheme.surfaceVariant,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         children: [
           Icon(
             Icons.date_range,
-            color: darkBlue,
+            color: scheme.primary,
             size: 16,
           ),
           SizedBox(
             width: defaultPadding / 4,
           ),
-          Text(text),
+          Text(
+            text,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
         ],
       ),
     );

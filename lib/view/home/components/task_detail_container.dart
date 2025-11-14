@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:todo/view/home/components/task_detail_col.dart';
-import '../../../res/constants.dart';
 import '../../../util/utils.dart';
 import '../../../view_model/controller/home_controller.dart';
 
@@ -26,12 +25,12 @@ class TaskDetailContainer extends StatelessWidget {
         decoration: BoxDecoration(
             boxShadow:  [
               BoxShadow(
-                  color: lightAccentBlue.withOpacity(.5),
-                  offset: Offset(0, 5),
+                  color: Theme.of(context).colorScheme.primary.withOpacity(.2),
+                  offset: const Offset(0, 5),
                   blurRadius: 10
               ),
             ],
-            color: Colors.white, borderRadius: BorderRadius.circular(30)),
+            color: Theme.of(context).colorScheme.surface, borderRadius: BorderRadius.circular(30)),
         child: Row(
           children: [
             Image.asset(
@@ -45,25 +44,25 @@ class TaskDetailContainer extends StatelessWidget {
             controller.list[ind][index].status=='complete' ? Container(
               height: 40,
               width: 40,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        lightOrange,
-                        darkOrange,
+                        Theme.of(context).colorScheme.primary,
+                        Theme.of(context).colorScheme.secondary,
                       ]
                   ),
                   boxShadow: [
                     BoxShadow(
-                        color: lightOrange,
-                        offset: Offset(0, 10),
+                        color: Theme.of(context).colorScheme.primary.withOpacity(.4),
+                        offset: const Offset(0, 10),
                         blurRadius: 10
                     )
                   ]
               ),
-              child: const Icon(Icons.done,color: Colors.white,),
+              child: Icon(Icons.done,color: Theme.of(context).colorScheme.onPrimary,),
             ):
              Align(
               alignment: Alignment.topRight,
@@ -71,9 +70,9 @@ class TaskDetailContainer extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 20),
                 child: PopupMenuButton(
                   onSelected:(value)=> controller.onTaskComplete(value, index, ind, controller.list[ind][index].key,context),
-                  surfaceTintColor: Colors.white,
+                  surfaceTintColor: Theme.of(context).colorScheme.surface,
                   padding: EdgeInsets.zero,
-                  icon: const Icon(Icons.more_vert_rounded,color: Colors.grey,size: 24,),
+                  icon: Icon(Icons.more_vert_rounded,color: Theme.of(context).colorScheme.onSurfaceVariant,size: 24,),
                   shape: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide.none,
@@ -81,33 +80,33 @@ class TaskDetailContainer extends StatelessWidget {
                   ),
                   itemBuilder: (context) {
                   return [
-                    const PopupMenuItem(
+                    PopupMenuItem(
                         height: 25,
                         value: 1,
                         child: Row(
                           children: [
-                            Icon(Icons.edit_note,color: Colors.orange,size: 14,),
-                            SizedBox(width: defaultPadding/2,),
+                            Icon(Icons.edit_note,color: Theme.of(context).colorScheme.primary,size: 14,),
+                            const SizedBox(width: 8,),
                             Text('Edit')
                           ],
                         )),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                         height: 25,
                         value: 2,
                         child: Row(
                           children: [
-                            Icon(Icons.delete_outline,color: Colors.orange,size: 14,),
-                            SizedBox(width: defaultPadding/2,),
+                            Icon(Icons.delete_outline,color: Theme.of(context).colorScheme.primary,size: 14,),
+                            const SizedBox(width: 8,),
                             Text('Delete')
                           ],
                         )),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                         height: 25,
                         value: 3,
                         child: Row(
                           children: [
-                            Icon(Icons.done_all_outlined,color: Colors.orange,size: 14,),
-                            SizedBox(width: defaultPadding/2,),
+                            Icon(Icons.done_all_outlined,color: Theme.of(context).colorScheme.primary,size: 14,),
+                            const SizedBox(width: 8,),
                             Text('Complete')
                           ],
                         )),

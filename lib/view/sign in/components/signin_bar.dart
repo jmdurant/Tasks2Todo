@@ -5,18 +5,19 @@ class SignInBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return  const Row(
+    final TextStyle titleStyle = Theme.of(context).textTheme.headlineSmall?.copyWith(
+          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.bold,
+        ) ?? const TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
+    return  Row(
       children: [
-        CustomBackButton(),
-        SizedBox(
+        const CustomBackButton(),
+        const SizedBox(
           width: 20,
         ),
         Text(
           'Sign in',
-          style: TextStyle(
-              fontSize: 30,
-              fontWeight: FontWeight.bold,
-              color: Colors.orange),
+          style: titleStyle,
         )
       ],
     );

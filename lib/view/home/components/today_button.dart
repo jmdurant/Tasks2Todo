@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:todo/view_model/controller/home_controller.dart';
 
-import '../../../res/constants.dart';
-
 class TodayButton extends StatelessWidget {
   const TodayButton({super.key});
 
@@ -19,25 +17,25 @@ class TodayButton extends StatelessWidget {
         alignment: Alignment.center,
         decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(30),
-            boxShadow: const [
+            boxShadow:  [
               BoxShadow(
-                  color: lightAccentBlue,
-                  offset: Offset(0, 5),
+                  color: Theme.of(context).colorScheme.secondary.withOpacity(.35),
+                  offset: const Offset(0, 5),
                   blurRadius: 20
               )
             ],
-            gradient:  const LinearGradient(
+            gradient:  LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  lightAccentBlue,
-                  darkAccentBlue
+                  Theme.of(context).colorScheme.secondary,
+                  Theme.of(context).colorScheme.primary
                 ]
             )
         ),
-        child: const Text(
-          'Today',style: TextStyle(
-          color: Colors.white,
+        child:  Text(
+          'Today',style: Theme.of(context).textTheme.titleMedium?.copyWith(
+          color: Theme.of(context).colorScheme.onPrimary,
           fontWeight: FontWeight.bold,
         ),
         ),

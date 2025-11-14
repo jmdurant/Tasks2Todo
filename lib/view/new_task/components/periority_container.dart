@@ -1,8 +1,4 @@
-
-
 import 'package:flutter/material.dart';
-
-import '../../../res/constants.dart';
 
 class PeriorityContainer extends StatelessWidget {
   final String text;
@@ -13,21 +9,25 @@ class PeriorityContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return AnimatedContainer(
-      duration: Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 300),
       padding: EdgeInsets.all(selected ? 3 : 0),
       decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(30),
-          color: selected ? Colors.orange : Colors.black12),
+          color: selected ? scheme.primary : scheme.surfaceVariant),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
-          color: selected ? Colors.white : Colors.transparent,
+          color: selected ? scheme.onPrimary : Colors.transparent,
           borderRadius: BorderRadius.circular(30),
         ),
         child: Text(
           text,
-          style: TextStyle(color: darkAccentBlue, fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: selected ? scheme.primary : scheme.onSurface,
+                fontWeight: FontWeight.bold,
+              ),
         ),
       ),
     );

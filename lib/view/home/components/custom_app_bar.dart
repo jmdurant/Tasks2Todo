@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:todo/view_model/controller/home_controller.dart';
-import '../../../res/constants.dart';
 import '../../../view_model/responsive.dart';
 
 class CustomAppBar extends StatelessWidget {
@@ -18,14 +17,14 @@ class CustomAppBar extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Hello,',style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                  color: Colors.black87,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontWeight: FontWeight.w400,
                   height: 0,
                   letterSpacing: 2,
                   fontSize: 18
               ),),
               Obx(() => Text(controller.name.value,style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                  color: Colors.black,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 2,
                   height: 0,
@@ -39,16 +38,16 @@ class CustomAppBar extends StatelessWidget {
             width: 50,
             decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                color: darkAccentBlue,
-                boxShadow: const [
+                color: Theme.of(context).colorScheme.primary,
+                boxShadow:  [
                   BoxShadow(
-                      color: lightAccentBlue,
+                      color: Theme.of(context).colorScheme.primary.withOpacity(.35),
                       blurRadius: 20,
-                      offset: Offset(0, 10)
+                      offset: const Offset(0, 10)
                   )
                 ]
             ),
-            child: const Icon(Icons.account_circle_outlined,color: Colors.white,),
+            child: Icon(Icons.account_circle_outlined,color: Theme.of(context).colorScheme.onPrimary,),
           ),
           if(Responsive.isTablet(context)) const Spacer(),
         ],

@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:todo/view/new_task/new_task.dart';
 import 'package:todo/view_model/responsive.dart';
 
-import '../../../res/constants.dart';
-
 class FloatingButton extends StatelessWidget {
   const FloatingButton({super.key});
 
@@ -51,7 +49,7 @@ class FloatingButton extends StatelessWidget {
             : showModalBottomSheet(
           elevation: 0,
           isScrollControlled: true,
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).colorScheme.surface,
           context: context, builder: (context) {
           return  NewTask();
         },);
@@ -59,15 +57,15 @@ class FloatingButton extends StatelessWidget {
       child: Container(
         height: 60,
         width: 60,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: LinearGradient(colors: [
-              lightAccentBlue,
-              darkAccentBlue,
-              darkAccentBlue
+              Theme.of(context).colorScheme.secondary,
+              Theme.of(context).colorScheme.primary,
+              Theme.of(context).colorScheme.primary
             ])
         ),
-        child: const Icon(Icons.add,color: Colors.white,),
+        child: Icon(Icons.add,color: Theme.of(context).colorScheme.onPrimary,),
       ),
     );
   }

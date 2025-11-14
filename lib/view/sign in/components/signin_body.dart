@@ -29,9 +29,12 @@ class SignInBody extends StatelessWidget {
             ),
             SyncModeSwitch(),
             const SizedBox(height: 10,),
-            const Text(
+            Text(
               'Sign in with one of the following options.',
-              style: TextStyle(color: Colors.black87),
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(color: Theme.of(context).colorScheme.onSurface),
             ),
             const SizedBox(
               height: 20,
@@ -55,16 +58,16 @@ class SignInBody extends StatelessWidget {
                 child: GestureDetector(
                   onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => SignUp(),)),
                   child: RichText(
-                      text: const TextSpan(children: [
+                      text: TextSpan(children: [
                     TextSpan(
                         text: 'Don\'t have an account? ',
                         style: TextStyle(
-                          color: Colors.grey,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         )),
                     TextSpan(
                         text: 'Sign up',
                         style: TextStyle(
-                          color: Colors.orange,
+                          color: Theme.of(context).colorScheme.primary,
                         ))
                   ])),
                 )),

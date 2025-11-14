@@ -7,11 +7,12 @@ class BottomNavBar extends StatelessWidget {
   final controller = Get.put(HomeController());
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Obx(()=>AnimatedBottomNavigationBar(
       elevation: 10,
       height: 60,
-      inactiveColor: Colors.grey,
-      activeColor: Colors.orange,
+      inactiveColor: scheme.onSurfaceVariant,
+      activeColor: scheme.primary,
       icons: const [
         Icons.home_max,
         Icons.ac_unit,

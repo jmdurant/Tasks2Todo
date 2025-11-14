@@ -1,30 +1,34 @@
 import 'package:flutter/material.dart';
 
-import '../res/constants.dart';
+const Color _seedOrange = Color(0xFFFE9B48);
+const Color _seedBlue = Color(0xFF1DBEF9);
 
 class AppTheme {
   static final ColorScheme _lightScheme = ColorScheme.fromSeed(
-    seedColor: darkOrange,
+    seedColor: _seedOrange,
     brightness: Brightness.light,
-    primary: darkOrange,
-    secondary: darkAccentBlue,
+    primary: _seedOrange,
+    secondary: _seedBlue,
   );
 
   static final ColorScheme _darkScheme = ColorScheme.fromSeed(
-    seedColor: darkAccentBlue,
+    seedColor: _seedBlue,
     brightness: Brightness.dark,
-    primary: darkAccentBlue,
-    secondary: darkOrange,
+    primary: _seedBlue,
+    secondary: _seedOrange,
   );
 
   static ThemeData get lightTheme => _baseTheme(_lightScheme);
   static ThemeData get darkTheme => _baseTheme(_darkScheme);
 
   static ThemeData _baseTheme(ColorScheme colorScheme) {
-    final textTheme = Typography.material2021().black.apply(
-          bodyColor: colorScheme.onSurface,
-          displayColor: colorScheme.onSurface,
-        );
+    final TextTheme baseTextTheme = colorScheme.brightness == Brightness.dark
+        ? Typography.material2021().white
+        : Typography.material2021().black;
+    final textTheme = baseTextTheme.apply(
+      bodyColor: colorScheme.onSurface,
+      displayColor: colorScheme.onSurface,
+    );
 
     return ThemeData(
       useMaterial3: true,
