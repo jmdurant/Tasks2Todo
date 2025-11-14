@@ -17,11 +17,11 @@ class UserPref{
   static Future<Map<dynamic,dynamic>> getUser() async {
     SharedPreferences pref=await SharedPreferences.getInstance();
     return {
-      'NAME' : pref.getString('NAME')!,
-      'EMAIL' : pref.getString('EMAIL')!,
-      'PASSWORD' : pref.getString('PASSWORD')!,
-      'NODE' : pref.getString('NODE')!,
-      'TOKEN' : pref.getString('TOKEN')!,
+      'NAME' : pref.getString('NAME') ?? '',
+      'EMAIL' : pref.getString('EMAIL') ?? '',
+      'PASSWORD' : pref.getString('PASSWORD') ?? '',
+      'NODE' : pref.getString('NODE') ?? '',
+      'TOKEN' : pref.getString('TOKEN') ?? '',
     };
   }
 
