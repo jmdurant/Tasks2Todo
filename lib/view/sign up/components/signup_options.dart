@@ -14,21 +14,21 @@ class SignUpOptions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!settingsController.firebaseAvailable) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.orangeAccent),
+        ),
+        child: const Text(
+          'Firebase disabled in this build. Enable USE_FIREBASE to sign in with Google.',
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
     return Obx(() {
-      if (!settingsController.firebaseAvailable) {
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.orangeAccent),
-          ),
-          child: const Text(
-            'Firebase disabled in this build. Enable USE_FIREBASE to sign in with Google.',
-            textAlign: TextAlign.center,
-          ),
-        );
-      }
       if (settingsController.useLocalOnly.value) {
         return Container(
           width: double.infinity,

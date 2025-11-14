@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:todo/config/app_config.dart';
+import 'package:todo/theme/app_theme.dart';
 import 'package:todo/view/splash/splash_screen.dart';
 import 'package:todo/view_model/controller/settings_controller.dart';
 
@@ -24,12 +25,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-
-        useMaterial3: true,
-      ),
-      home: const SplashView()
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
+      home: const SplashView(),
     );
   }
 }
-
