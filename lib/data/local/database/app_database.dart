@@ -56,15 +56,37 @@ class ParsedItems extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+class Projects extends Table {
+  TextColumn get id => text()();
+  TextColumn get name => text()();
+  TextColumn get description => text().nullable()();
+  IntColumn get color => integer().withDefault(const Constant(0))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 @DriftDatabase(
-  tables: [Tasks, CaptureSessions, ParsedItems],
-  daos: [TaskDao, CaptureSessionDao, ParsedItemDao],
+  tables: [Tasks, CaptureSessions, ParsedItems, Projects],
+  daos: [TaskDao, CaptureSessionDao, ParsedItemDao, ProjectDao],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (Migrator m) async {
+          await m.createAll();
+        },
+        onUpgrade: (Migrator m, int from, int to) async {
+          if (from < 2) {
+            await m.createTable(projects);
+          }
+        },
+      );
 }
 
 LazyDatabase _openConnection() {
@@ -192,5 +214,22 @@ class ParsedItemDao extends DatabaseAccessor<AppDatabase>
   Future<int> deleteBySession(String sessionId) {
     return (delete(parsedItems)..where((tbl) => tbl.sessionId.equals(sessionId)))
         .go();
+  }
+}
+
+@DriftAccessor(tables: [Projects])
+class ProjectDao extends DatabaseAccessor<AppDatabase> with _$ProjectDaoMixin {
+  ProjectDao(super.db);
+
+  Future<void> insertProject(ProjectsCompanion project) {
+    return into(projects).insertOnConflictUpdate(project);
+  }
+
+  Stream<List<Project>> watchProjects() {
+    return select(projects).watch();
+  }
+
+  Future<int> deleteProject(String id) {
+    return (delete(projects)..where((tbl) => tbl.id.equals(id))).go();
   }
 }

@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:todo/data/local/database/app_database.dart';
 import 'package:todo/db_helper/db_helper.dart';
 import 'package:todo/util/utils.dart';
 import '../../data/shared pref/shared_pref.dart';
@@ -13,6 +16,7 @@ class HomeController extends GetxController {
   final DbHelper db = DbHelper();
   final DateTime dateTime = DateTime.now();
   Connectivity? connectivity;
+  RxInt weekOffset = 0.obs;
 
   List<RxList> list=[
     [].obs,
@@ -26,14 +30,41 @@ class HomeController extends GetxController {
   RxInt barIndex = 0.obs;
   RxList model = [].obs;
   final ScrollController scrollController=ScrollController();
+  final RxList<Project> projects = <Project>[].obs;
+  StreamSubscription<List<Project>>? _projectSubscription;
+
+  void nextWeek() {
+    weekOffset.value++;
+    getTasks();
+  }
+
+  void previousWeek() {
+    weekOffset.value--;
+    getTasks();
+  }
+
+  DateTime getWeekStartDate() {
+    return dateTime.add(Duration(days: weekOffset.value * 7));
+  }
 
 
-  HomeController(){
+  @override
+  void onInit() {
+    super.onInit();
     if (userData['NAME'] == null) {
       getUserData();
     }
+    getTasks();
+    _projectSubscription = db.watchProjects().listen((event) {
+      projects.assignAll(event);
+    });
   }
 
+  @override
+  void onClose() {
+    _projectSubscription?.cancel();
+    super.onClose();
+  }
 
 
 
@@ -111,5 +142,23 @@ class HomeController extends GetxController {
     }
   }
 
+
+  Future<void> createProject({
+    required String name,
+    String? description,
+    required Color color,
+  }) async {
+    final String id = DateTime.now().microsecondsSinceEpoch.toString();
+    await db.addProject(
+      id: id,
+      name: name,
+      description: description?.trim().isEmpty ?? true ? null : description,
+      color: color.value,
+    );
+  }
+
+  Future<void> deleteProject(String id) async {
+    await db.deleteProject(id);
+  }
 
 }

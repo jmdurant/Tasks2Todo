@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:todo/data/local/database/app_database.dart';
 import 'package:todo/model/task_model.dart';
@@ -15,10 +16,12 @@ class DbHelper {
   late final CaptureSessionDao _captureSessionDao =
       CaptureSessionDao(_database);
   late final ParsedItemDao _parsedItemDao = ParsedItemDao(_database);
+  late final ProjectDao _projectDao = ProjectDao(_database);
 
   CaptureSessionDao get captureSessions => _captureSessionDao;
 
   ParsedItemDao get parsedItems => _parsedItemDao;
+  ProjectDao get projects => _projectDao;
 
   Future<TaskModel> insert(TaskModel model) async {
     await _taskDao.insertTask(model);
@@ -49,6 +52,30 @@ class DbHelper {
 
   Future<List<TaskModel>> getData() {
     return _taskDao.getAllTasks();
+  }
+
+  Future<void> addProject({
+    required String id,
+    required String name,
+    String? description,
+    required int color,
+  }) {
+    return _projectDao.insertProject(
+      ProjectsCompanion(
+        id: Value(id),
+        name: Value(name),
+        description: Value(description),
+        color: Value(color),
+      ),
+    );
+  }
+
+  Stream<List<Project>> watchProjects() {
+    return _projectDao.watchProjects();
+  }
+
+  Future<void> deleteProject(String id) {
+    return _projectDao.deleteProject(id);
   }
 }
 

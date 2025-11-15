@@ -8,6 +8,7 @@ import 'appbar.dart';
 import 'button.dart';
 import 'input_form.dart';
 import '../../shared/sync_mode_switch.dart';
+import '../../shared/theme_mode_switch.dart';
 
 class SignupBody extends StatelessWidget {
   SignupBody({super.key});
@@ -30,6 +31,7 @@ class SignupBody extends StatelessWidget {
               height: 50,
             ),
             SyncModeSwitch(),
+            ThemeModeSwitch(),
             const SizedBox(height: 10,),
             Text(
               'Sign up with one of the following options.',
