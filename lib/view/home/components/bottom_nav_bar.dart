@@ -11,13 +11,14 @@ class BottomNavBar extends StatelessWidget {
     return Obx(()=>AnimatedBottomNavigationBar(
       elevation: 10,
       height: 60,
+      backgroundColor: scheme.surface,
       inactiveColor: scheme.onSurfaceVariant,
       activeColor: scheme.primary,
       icons: const [
-        Icons.home_max,
-        Icons.ac_unit,
-        Icons.edit_note_sharp,
-        Icons.person_outline_rounded
+        Icons.calendar_month,
+        Icons.edit_note,
+        Icons.folder_open,
+        Icons.settings
       ],
       activeIndex: controller.barIndex.value,
       gapLocation: GapLocation.center,

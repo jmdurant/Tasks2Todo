@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:todo/data/local/database/app_database.dart';
 import 'package:todo/db_helper/db_helper.dart';
 import 'package:todo/model/task_model.dart';
 import 'package:todo/util/utils.dart';
@@ -10,8 +11,8 @@ import 'package:todo/view_model/controller/home_controller.dart';
 class NewTaskController extends GetxController {
   DateTime? pickedDate;
   final DbHelper db = DbHelper();
-  RxInt selectedImage = 0.obs;
-  RxBool lowPeriority = false.obs;
+  RxInt selectedImage = (-1).obs;
+  RxString selectedPriority = 'Low'.obs;
   RxBool labelFocus = false.obs;
   RxBool categoryFocus = false.obs;
   RxBool descriptionFocus = false.obs;
@@ -19,10 +20,37 @@ class NewTaskController extends GetxController {
   RxString startTime = ''.obs;
   RxString endTime = ''.obs;
   RxBool loading = false.obs;
-  final homeController=Get.put(HomeController());
+  final HomeController homeController = Get.put(HomeController());
   final label = TextEditingController().obs;
   final description = TextEditingController().obs;
   final category = TextEditingController().obs;
+
+  // Project management
+  RxList<String> availableProjects = <String>['Inbox'].obs;
+  RxString selectedProject = 'Inbox'.obs;
+
+  void setSelectedProject(String project) {
+    selectedProject.value = project;
+    category.value.text = project; // Keep category in sync for database
+  }
+
+  void syncProjects(List<Project> projects) {
+    final names = <String>['Inbox'];
+    names.addAll(projects.map((p) => p.name).whereType<String>());
+    availableProjects.value = names.toSet().toList();
+    if (!availableProjects.contains(selectedProject.value)) {
+      setSelectedProject('Inbox');
+    }
+  }
+
+  @override
+  void onInit() {
+    super.onInit();
+    syncProjects(homeController.projects);
+    ever<List<Project>>(homeController.projects, (projList) {
+      syncProjects(projList);
+    });
+  }
 
   picStartTime(BuildContext context) async {
     var picker =
@@ -76,13 +104,15 @@ class NewTaskController extends GetxController {
     descriptionFocus.value = false;
   }
   insertTask(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+
     if (label.value.text.toString().isEmpty) {
       Utils.showSnackBar(
         'Warning',
         'Enter valid label',
-        const Icon(
+        Icon(
           Icons.warning_amber_rounded,
-          color: Colors.red,
+          color: scheme.error,
         ),
       );
       return;
@@ -90,10 +120,10 @@ class NewTaskController extends GetxController {
     if (category.value.text.toString().isEmpty) {
       Utils.showSnackBar(
         'Warning',
-        'Enter Correct Category',
-        const Icon(
+        'Select a Project',
+        Icon(
           Icons.warning_amber_rounded,
-          color: Colors.red,
+          color: scheme.error,
         ),
       );
       return;
@@ -118,11 +148,11 @@ class NewTaskController extends GetxController {
         startTime: startTime.value,
         endTime: endTime.value,
         date: selectedDate.value,
-        periority: lowPeriority.value ? 'Low' : 'High',
+        periority: selectedPriority.value,
         description: description.value.text.toString(),
         category: category.value.text.toString(),
         title: label.value.text.toString(),
-        image: selectedImage.value.toString(),
+        image: selectedImage.value >= 0 ? selectedImage.value.toString() : '',
         show: 'yes',
         status: 'unComplete'))
         .then((value) {
@@ -137,9 +167,9 @@ class NewTaskController extends GetxController {
         Utils.showSnackBar(
           'Successful',
           'Task is created',
-          const Icon(
+          Icon(
             Icons.done,
-            color: Colors.white,
+            color: scheme.onPrimary,
           ),
         );
       });

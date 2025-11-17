@@ -21,10 +21,10 @@ class LabelInput extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Lable',
+                Text(
+                  'Title',
                   style: TextStyle(
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(
@@ -32,7 +32,7 @@ class LabelInput extends StatelessWidget {
                 ),
                 Obx(() => TextInputField(
                     controller: controller.label.value,
-                    hint: 'Enter Label',
+                    hint: 'Enter Title',
                     onTap: () => controller.setLabelFocus(),
                     focus: controller.labelFocus.value),),
               ],
@@ -45,9 +45,9 @@ class LabelInput extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Periority',
+                'Priority',
                 style: TextStyle(
-                    color: Colors.black,
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontWeight: FontWeight.bold),
               ),
               const SizedBox(
@@ -56,14 +56,20 @@ class LabelInput extends StatelessWidget {
               Row(
                 children: [
                   Obx(() => InkWell(
-                    onTap: () => controller.lowPeriority.value=true,
-                      child: PeriorityContainer(text: 'Low', selected: controller.lowPeriority.value)),),
+                    onTap: () => controller.selectedPriority.value = 'Low',
+                      child: PeriorityContainer(text: 'Low', selected: controller.selectedPriority.value == 'Low')),),
                   const SizedBox(
                     width: defaultPadding / 2,
                   ),
                   Obx(() => InkWell(
-                  onTap: () => controller.lowPeriority.value=false,
-                      child: PeriorityContainer(text: 'High', selected: !controller.lowPeriority.value)),)
+                    onTap: () => controller.selectedPriority.value = 'Medium',
+                      child: PeriorityContainer(text: 'Med', selected: controller.selectedPriority.value == 'Medium')),),
+                  const SizedBox(
+                    width: defaultPadding / 2,
+                  ),
+                  Obx(() => InkWell(
+                  onTap: () => controller.selectedPriority.value = 'High',
+                      child: PeriorityContainer(text: 'High', selected: controller.selectedPriority.value == 'High')),)
                 ],
               )
             ],

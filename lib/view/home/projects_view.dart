@@ -343,7 +343,7 @@ class ProjectsView extends StatelessWidget {
                             border: Border.all(
                               color: isSelected
                                   ? scheme.onPrimary
-                                  : Colors.transparent,
+                                  : scheme.surface.withOpacity(0),
                               width: 2,
                             ),
                           ),
