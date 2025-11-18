@@ -100,18 +100,33 @@ class HomeController extends GetxController {
     return '${Utils.addPrefix(dateTime.add(Duration(days: value)).day.toString())}/${Utils.addPrefix(dateTime.add(Duration(days: value)).month.toString())}/${Utils.addPrefix(dateTime.add(Duration(days: value)).year.toString())}';
   }
   getSepretLists(){
-    List<RxList<dynamic>> tempList=[];
-    for(int i=0;i<7;i++){
-      RxList tempList1=[].obs;
-      tempList1.clear();
-      for(int j=0;j<model.length;j++){
-        if(model[j].date==getDateAccordingTabs(i)){
-          tempList1.add(model[j]);
-        }
-      }
-      tempList.add(tempList1);
+    // Optimized O(n) algorithm using a map for single-pass grouping
+    Map<String, List<dynamic>> dateMap = {};
+
+    // Pre-compute dates for the 7 days
+    List<String> dates = List.generate(7, (i) => getDateAccordingTabs(i));
+
+    // Initialize map with empty lists for each date
+    for (String date in dates) {
+      dateMap[date] = [];
     }
-    list=tempList;
+
+    // Single pass through all tasks to group by date
+    for (var task in model) {
+      String taskDate = task.date;
+      if (dateMap.containsKey(taskDate)) {
+        dateMap[taskDate]!.add(task);
+      }
+    }
+
+    // Convert map to list of RxLists
+    List<RxList<dynamic>> tempList = [];
+    for (int i = 0; i < 7; i++) {
+      String date = dates[i];
+      tempList.add((dateMap[date] ?? []).obs);
+    }
+
+    list = tempList;
   }
   onMoveNextPage(){
     if(currentIndex.value<7){

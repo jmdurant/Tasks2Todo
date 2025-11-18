@@ -11,16 +11,13 @@ class SplashServices{
   static void checkLogin()async{
     SharedPreferences pref=await SharedPreferences.getInstance();
     String? uid=pref.getString('TOKEN');
-    Timer(const Duration(milliseconds: 2000), () {
-      if(uid==null){
-        Get.to(SignUp());
-      }else{
-        final homeController=Get.put(HomeController());
-        final newTaskController=Get.put(NewTaskController());
-        homeController.getTasks();
-        Get.to(HomePage());
-      }
-    });
-
+    if(uid==null){
+      Get.to(SignUp());
+    }else{
+      final homeController=Get.put(HomeController());
+      final newTaskController=Get.put(NewTaskController());
+      homeController.getTasks();
+      Get.to(HomePage());
+    }
   }
 }

@@ -7,15 +7,27 @@ import 'package:todo/theme/app_theme.dart';
 import 'package:todo/view/splash/splash_screen.dart';
 import 'package:todo/view_model/controller/settings_controller.dart';
 
+import 'data/local/database/database_native.dart'
+    if (dart.library.html) 'data/local/database/database_web.dart' as db_preload;
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  if (AppConfig.firebaseAvailable) {
-    await Firebase.initializeApp();
-    await GoogleSignIn.instance.initialize();
-  }
-  final SettingsController settingsController =
-      Get.put(SettingsController(), permanent: true);
-  await settingsController.initialize();
+
+  // Parallelize all initialization tasks for faster startup
+  await Future.wait([
+    if (AppConfig.firebaseAvailable) ...[
+      Firebase.initializeApp(),
+      GoogleSignIn.instance.initialize(),
+    ],
+    () async {
+      final SettingsController settingsController =
+          Get.put(SettingsController(), permanent: true);
+      await settingsController.initialize();
+    }(),
+    // Preload database (especially important for WASM on web)
+    db_preload.preloadDatabase(),
+  ]);
+
   runApp(const MyApp());
 }
 
