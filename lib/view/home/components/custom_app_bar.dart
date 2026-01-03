@@ -5,7 +5,7 @@ import '../../../view_model/responsive.dart';
 
 class CustomAppBar extends StatelessWidget {
    CustomAppBar({super.key});
-   final controller=Get.put(HomeController());
+   final controller = Get.find<HomeController>();
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -41,7 +41,7 @@ class CustomAppBar extends StatelessWidget {
                 color: Theme.of(context).colorScheme.primary,
                 boxShadow:  [
                   BoxShadow(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(.35),
+                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.35),
                       blurRadius: 20,
                       offset: const Offset(0, 10)
                   )

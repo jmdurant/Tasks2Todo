@@ -25,7 +25,7 @@ class Grid extends StatelessWidget {
   final int crossAsis;
   final double ratio;
  final int ind;
-  final  controller =Get.put(HomeController());
+  final controller = Get.find<HomeController>();
    Grid({super.key, required this.crossAsis, required this.ratio, required this.ind});
   @override
   Widget build(BuildContext context) {

@@ -7,7 +7,7 @@ class TextFieldSufix extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme scheme = Theme.of(context).colorScheme;
-    final Color shadowColor = scheme.primary.withOpacity(.3);
+    final Color shadowColor = scheme.primary.withValues(alpha: 0.3);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10,vertical: 10),
       child: Container(

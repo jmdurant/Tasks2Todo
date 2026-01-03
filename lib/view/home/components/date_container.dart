@@ -5,7 +5,7 @@ import 'dates.dart';
 class DateContainer extends StatelessWidget {
   final int index;
   DateContainer({super.key, required this.index});
-  final controller=Get.put(HomeController());
+  final controller = Get.find<HomeController>();
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
@@ -35,8 +35,8 @@ class DateContainer extends StatelessWidget {
               boxShadow: [
                 BoxShadow(
                   color: isSelected
-                      ? scheme.primary.withOpacity(.35)
-                      : fallbackShadow.withOpacity(.08),
+                      ? scheme.primary.withValues(alpha: 0.35)
+                      : fallbackShadow.withValues(alpha: 0.08),
                   offset: const Offset(0, 10),
                   blurRadius: 20,
                 ),

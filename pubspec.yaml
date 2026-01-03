@@ -54,6 +54,7 @@ dependencies:
   sign_in_with_apple: ^7.0.1
   flutter_svg: ^2.2.2
   connectivity_plus: ^7.0.0
+  pencil_field: ^0.4.10
 
 dev_dependencies:
   flutter_test:

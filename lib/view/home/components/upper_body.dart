@@ -9,7 +9,7 @@ import 'date_container.dart';
 
 class UperBody extends StatelessWidget {
   UperBody({super.key});
-  final controller=Get.put(HomeController());
+  final controller = Get.find<HomeController>();
   @override
   Widget build(BuildContext context) {
     return Column(

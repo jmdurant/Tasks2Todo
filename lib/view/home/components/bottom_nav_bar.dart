@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import '../../../view_model/controller/home_controller.dart';
 class BottomNavBar extends StatelessWidget {
   BottomNavBar({super.key});
-  final controller = Get.put(HomeController());
+  final controller = Get.find<HomeController>();
   @override
   Widget build(BuildContext context) {
     final ColorScheme scheme = Theme.of(context).colorScheme;

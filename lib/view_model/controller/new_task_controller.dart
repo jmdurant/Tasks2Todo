@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:todo/data/local/database/app_database.dart';
@@ -20,7 +18,7 @@ class NewTaskController extends GetxController {
   RxString startTime = ''.obs;
   RxString endTime = ''.obs;
   RxBool loading = false.obs;
-  final HomeController homeController = Get.put(HomeController());
+  final HomeController homeController = Get.find<HomeController>();
   final label = TextEditingController().obs;
   final description = TextEditingController().obs;
   final category = TextEditingController().obs;
@@ -159,20 +157,23 @@ class NewTaskController extends GetxController {
 
           // homeController.getTasks();
 
-      Duration dif=pickedDate!.difference(DateTime(DateTime.now().year,DateTime.now().month,DateTime.now().day));
-      homeController.list[dif.inDays].add(value);
-      Timer(const Duration(seconds: 1), () {
-        loading.value = false;
-        Get.back();
-        Utils.showSnackBar(
-          'Successful',
-          'Task is created',
-          Icon(
-            Icons.done,
-            color: scheme.onPrimary,
-          ),
-        );
-      });
+      Duration dif = pickedDate!.difference(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day));
+      if (dif.inDays >= 0 && dif.inDays < 7) {
+        // Add to local state - create new list to trigger reactivity
+        final updatedDay = List<TaskModel>.from(homeController.list[dif.inDays]);
+        updatedDay.add(value);
+        homeController.list[dif.inDays] = updatedDay;
+      }
+      loading.value = false;
+      Get.back();
+      Utils.showSnackBar(
+        'Successful',
+        'Task is created',
+        Icon(
+          Icons.done,
+          color: scheme.onPrimary,
+        ),
+      );
     });
   }
 }

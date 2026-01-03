@@ -102,22 +102,22 @@ class _SplashImageState extends State<SplashImage> with SingleTickerProviderStat
               boxShadow: [
                 BoxShadow(
                     offset: const Offset(0,2),
-                    color: Theme.of(context).colorScheme.primary.withOpacity(.5),
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
                     blurRadius: 10
                 ),
                 BoxShadow(
                     offset: const Offset(0,-2),
-                    color: Theme.of(context).colorScheme.secondary.withOpacity(.3),
+                    color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.3),
                     blurRadius: 10
                 ),
                 BoxShadow(
                     offset: const Offset(2,0),
-                    color: Theme.of(context).colorScheme.primaryContainer.withOpacity(.4),
+                    color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.4),
                     blurRadius: 10
                 ),
                 BoxShadow(
                     offset: const Offset(-2,0),
-                    color: Theme.of(context).colorScheme.primaryContainer.withOpacity(.4),
+                    color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.4),
                     blurRadius: 10
                 )
               ]

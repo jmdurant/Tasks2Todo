@@ -15,7 +15,7 @@ class ChangeIconButton extends StatelessWidget {
           color: scheme.secondary,
           boxShadow: [
             BoxShadow(
-                color: scheme.secondary.withOpacity(.3),
+                color: scheme.secondary.withValues(alpha: 0.3),
                 offset: const Offset(0, 10),
                 blurRadius: 10
             )

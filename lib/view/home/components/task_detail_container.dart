@@ -8,16 +8,20 @@ class TaskDetailContainer extends StatelessWidget {
   TaskDetailContainer({super.key, required this.index, required this.ind});
   final int index;
   final int ind;
-  final  controller =Get.put(HomeController());
+  final controller = Get.find<HomeController>();
   @override
   Widget build(BuildContext context) {
     return Dismissible(
-      key: UniqueKey(),
+      key: ValueKey(controller.list[ind][index].key),
       confirmDismiss: (direction) async{
-       return await Utils.showWarningDialog(context, 'Remove Task', 'Are you sure to remove this task', 'Confirm', () {
-         controller.db.delete(controller.list[ind][index].key, 'Tasks');
-         controller.list[ind].remove(controller.list[ind][index]);
-       });
+        final task = controller.list[ind][index];
+        return await Utils.showWarningDialog(context, 'Remove Task', 'Are you sure to remove this task', 'Confirm', () {
+          controller.db.delete(task.key!, 'Tasks');
+          // Update local state - create new list to trigger reactivity
+          final updatedDay = List.of(controller.list[ind]);
+          updatedDay.removeAt(index);
+          controller.list[ind] = updatedDay;
+        });
       },
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
@@ -25,7 +29,7 @@ class TaskDetailContainer extends StatelessWidget {
         decoration: BoxDecoration(
             boxShadow:  [
               BoxShadow(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(.2),
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
                   offset: const Offset(0, 5),
                   blurRadius: 10
               ),
@@ -56,7 +60,7 @@ class TaskDetailContainer extends StatelessWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(.4),
+                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
                         offset: const Offset(0, 10),
                         blurRadius: 10
                     )
@@ -69,7 +73,7 @@ class TaskDetailContainer extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.only(top: 20),
                 child: PopupMenuButton(
-                  onSelected:(value)=> controller.onTaskComplete(value, index, ind, controller.list[ind][index].key,context),
+                  onSelected:(value)=> controller.onTaskComplete(value, index, ind, controller.list[ind][index].key!,context),
                   surfaceTintColor: Theme.of(context).colorScheme.surface,
                   padding: EdgeInsets.zero,
                   icon: Icon(Icons.more_vert_rounded,color: Theme.of(context).colorScheme.onSurfaceVariant,size: 24,),

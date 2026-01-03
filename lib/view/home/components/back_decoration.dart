@@ -15,7 +15,7 @@ class BackColors extends StatelessWidget {
     final List<Color> tertiaryRamp =
         _gradientRamp(scheme.tertiary);
     final List<Color> surfaceRamp =
-        _gradientRamp(scheme.primaryContainer.withOpacity(.8));
+        _gradientRamp(scheme.primaryContainer.withValues(alpha: 0.8));
 
     return Container(
       color: scheme.surface,
@@ -130,5 +130,5 @@ class BackColors extends StatelessWidget {
 
 List<Color> _gradientRamp(Color base) {
   const List<double> opacities = <double>[0, .1, .2, .3, .4, .4, .3, .2, .1, 0];
-  return opacities.map((double o) => base.withOpacity(o)).toList();
+  return opacities.map((double o) => base.withValues(alpha: o)).toList();
 }

@@ -261,7 +261,7 @@ class _QuickEntryViewState extends State<QuickEntryView> {
       }
 
       return Card(
-        color: scheme.surfaceVariant.withOpacity(0.4),
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(
@@ -313,7 +313,7 @@ class _QuickEntryViewState extends State<QuickEntryView> {
     final ColorScheme scheme = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: scheme.surfaceVariant.withOpacity(.4),
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(16),
       ),
       child: ToggleButtons(
@@ -327,7 +327,7 @@ class _QuickEntryViewState extends State<QuickEntryView> {
           });
         },
         borderRadius: BorderRadius.circular(16),
-        fillColor: scheme.primary.withOpacity(.15),
+        fillColor: scheme.primary.withValues(alpha: 0.15),
         selectedColor: scheme.primary,
         children: const [
           Padding(
@@ -360,10 +360,10 @@ class _QuickEntryViewState extends State<QuickEntryView> {
       key: const ValueKey('textEntry'),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: scheme.surfaceVariant.withOpacity(0.3),
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: scheme.outline.withOpacity(0.2),
+          color: scheme.outline.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -394,7 +394,7 @@ class _QuickEntryViewState extends State<QuickEntryView> {
               '  > Sat ~ 2pm : Check stock first\n'
               '[x] Measure countertops',
           hintStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: scheme.onSurfaceVariant.withOpacity(0.5),
+                color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
               ),
           border: InputBorder.none,
         ),
@@ -413,7 +413,7 @@ class _QuickEntryViewState extends State<QuickEntryView> {
             decoration: BoxDecoration(
               color: scheme.surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: scheme.outline.withOpacity(.2)),
+              border: Border.all(color: scheme.outline.withValues(alpha: 0.2)),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),

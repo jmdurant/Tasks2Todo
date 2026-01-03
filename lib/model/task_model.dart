@@ -55,4 +55,32 @@ class TaskModel {
       'status' : status,
     };
   }
+
+  TaskModel copyWith({
+    String? key,
+    String? title,
+    String? category,
+    String? description,
+    String? image,
+    String? periority,
+    String? startTime,
+    String? endTime,
+    String? date,
+    String? show,
+    String? status,
+  }) {
+    return TaskModel(
+      key: key ?? this.key,
+      title: title ?? this.title,
+      category: category ?? this.category,
+      description: description ?? this.description,
+      image: image ?? this.image,
+      periority: periority ?? this.periority,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+      date: date ?? this.date,
+      show: show ?? this.show,
+      status: status ?? this.status,
+    );
+  }
 }

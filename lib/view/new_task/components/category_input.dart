@@ -40,10 +40,10 @@ class CategoryInput extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   decoration: BoxDecoration(
-                    color: scheme.surfaceVariant.withOpacity(0.3),
+                    color: scheme.surfaceContainerHighest.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: scheme.outline.withOpacity(0.2),
+                      color: scheme.outline.withValues(alpha: 0.2),
                       width: 1,
                     ),
                   ),

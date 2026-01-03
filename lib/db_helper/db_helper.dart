@@ -54,6 +54,10 @@ class DbHelper {
     return _taskDao.getAllTasks();
   }
 
+  Future<List<TaskModel>> getTasksForDates(List<String> dates) {
+    return _taskDao.getTasksForDates(dates);
+  }
+
   Future<void> addProject({
     required String id,
     required String name,

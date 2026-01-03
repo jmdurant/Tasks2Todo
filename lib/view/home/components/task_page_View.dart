@@ -6,7 +6,7 @@ import '../../../view_model/controller/home_controller.dart';
 
 class TaskPageView extends StatelessWidget {
   TaskPageView({super.key});
-  final controller = Get.put(HomeController());
+  final controller = Get.find<HomeController>();
   @override
   Widget build(BuildContext context) {
     return PageView(

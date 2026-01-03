@@ -145,6 +145,28 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
       ),
     );
   }
+
+  /// Get tasks for a list of date strings (e.g., ["03/01/2026", "04/01/2026", ...])
+  Future<List<TaskModel>> getTasksForDates(List<String> dates) async {
+    final List<Task> rows = await (select(tasks)
+          ..where((tbl) => tbl.date.isIn(dates)))
+        .get();
+    return rows
+        .map((Task row) => TaskModel(
+              key: row.key,
+              startTime: row.startTime,
+              endTime: row.endTime,
+              date: row.date,
+              periority: row.periority,
+              description: row.description,
+              category: row.category,
+              title: row.title,
+              image: row.image,
+              show: row.show,
+              status: row.status,
+            ))
+        .toList();
+  }
 }
 
 @DriftAccessor(tables: [CaptureSessions])

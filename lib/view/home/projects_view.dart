@@ -44,7 +44,7 @@ class ProjectsView extends StatelessWidget {
                     title: 'Inbox',
                     subtitle: 'Unprocessed tasks',
                     color: scheme.primary,
-                    taskCount: controller.model.length,
+                    taskCount: controller.totalTaskCount,
                   ),
                   const SizedBox(height: 12),
                   _buildProjectsHeader(context),
@@ -98,9 +98,9 @@ class ProjectsView extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: scheme.surfaceVariant.withOpacity(0.4),
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: scheme.outlineVariant.withOpacity(.2)),
+        border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -142,16 +142,16 @@ class ProjectsView extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: scheme.surfaceVariant.withOpacity(0.3),
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: scheme.outline.withOpacity(0.2)),
+        border: Border.all(color: scheme.outline.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: color.withOpacity(.2),
+              color: color.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: color, size: 24),
@@ -181,7 +181,7 @@ class ProjectsView extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: color.withOpacity(.2),
+              color: color.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
@@ -202,7 +202,7 @@ class ProjectsView extends StatelessWidget {
     required Project project,
   }) {
     final ColorScheme scheme = Theme.of(context).colorScheme;
-    final Color color = Color(project.color).withOpacity(1);
+    final Color color = Color(project.color);
     final String subtitle =
         project.description?.isNotEmpty == true ? project.description! : 'No description yet';
 
@@ -221,10 +221,10 @@ class ProjectsView extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: scheme.surfaceVariant.withOpacity(0.3),
+          color: scheme.surfaceContainerHighest.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: scheme.outline.withOpacity(0.2),
+            color: scheme.outline.withValues(alpha: 0.2),
             width: 1,
           ),
         ),
@@ -233,7 +233,7 @@ class ProjectsView extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
+                color: color.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -267,7 +267,7 @@ class ProjectsView extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
+                color: color.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
@@ -343,7 +343,7 @@ class ProjectsView extends StatelessWidget {
                             border: Border.all(
                               color: isSelected
                                   ? scheme.onPrimary
-                                  : scheme.surface.withOpacity(0),
+                                  : scheme.surface.withValues(alpha: 0),
                               width: 2,
                             ),
                           ),

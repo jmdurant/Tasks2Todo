@@ -8,7 +8,7 @@ class IconContainer extends StatelessWidget {
     var size=MediaQuery.sizeOf(context);
     final ColorScheme scheme = Theme.of(context).colorScheme;
     final Color borderColor = scheme.primary;
-    final Color shadowColor = scheme.primary.withOpacity(.3);
+    final Color shadowColor = scheme.primary.withValues(alpha: 0.3);
     return Container(
       height: 60,
       width: size.width,

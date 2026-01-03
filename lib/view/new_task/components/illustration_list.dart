@@ -58,7 +58,7 @@ class SelectImageList extends StatelessWidget {
                                 ): null,
                                 boxShadow: controller.selectedImage.value==index ? [
                                   BoxShadow(
-                                    color: Theme.of(context).colorScheme.secondary.withOpacity(.4),
+                                    color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.4),
                                     blurRadius: 10,
                                     offset: const Offset(0, 5),
                                   ),

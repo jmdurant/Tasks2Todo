@@ -7,7 +7,7 @@ class TodayButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller=Get.put(HomeController());
+    final controller = Get.find<HomeController>();
     return InkWell(
       borderRadius: BorderRadius.circular(30),
       onTap: () => controller.pageController.animateToPage(0, duration: Duration(milliseconds: 300), curve: Curves.easeIn),
@@ -19,7 +19,7 @@ class TodayButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(30),
             boxShadow:  [
               BoxShadow(
-                  color: Theme.of(context).colorScheme.secondary.withOpacity(.35),
+                  color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.35),
                   offset: const Offset(0, 5),
                   blurRadius: 20
               )

@@ -25,7 +25,7 @@ class CustomBackButton extends StatelessWidget {
       scheme.primary,
       scheme.secondary,
     ];
-    final Color shadowColor = scheme.primary.withOpacity(.25);
+    final Color shadowColor = scheme.primary.withValues(alpha: 0.25);
     return Container(
       height: height,
       width: width,
