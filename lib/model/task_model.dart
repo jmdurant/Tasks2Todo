@@ -12,19 +12,22 @@ class TaskModel {
   String? date;
   String? show;
   String? status;
+  String? tags; // Comma-separated list of tags
 
-  TaskModel(
-      { required this.key,
-       required this.startTime,
-       required this.endTime,
-        required this.date,
-        required this.periority,
-        required this.description,
-        required this.category,
-        required this.title,
-        required this.image,
-        required this.show,
-        required this.status});
+  TaskModel({
+    required this.key,
+    required this.startTime,
+    required this.endTime,
+    required this.date,
+    required this.periority,
+    required this.description,
+    required this.category,
+    required this.title,
+    required this.image,
+    required this.show,
+    required this.status,
+    this.tags,
+  });
 
   TaskModel.fromMap(Map<String, dynamic> res) {
     key = res['key'];
@@ -37,7 +40,8 @@ class TaskModel {
     startTime = res['startTime'];
     endTime = res['endTime'];
     date = res['date'];
-    status=res['status'];
+    status = res['status'];
+    tags = res['tags'];
   }
 
   Map<String, Object?> toMap() {
@@ -52,7 +56,8 @@ class TaskModel {
       'endTime': endTime,
       'date': date,
       'show': show,
-      'status' : status,
+      'status': status,
+      'tags': tags,
     };
   }
 
@@ -68,6 +73,7 @@ class TaskModel {
     String? date,
     String? show,
     String? status,
+    String? tags,
   }) {
     return TaskModel(
       key: key ?? this.key,
@@ -81,6 +87,14 @@ class TaskModel {
       date: date ?? this.date,
       show: show ?? this.show,
       status: status ?? this.status,
+      tags: tags ?? this.tags,
     );
   }
+
+  /// Helper to get tags as a list
+  List<String> get tagList =>
+      tags?.split(',').map((t) => t.trim()).where((t) => t.isNotEmpty).toList() ?? [];
+
+  /// Helper to set tags from a list
+  set tagList(List<String> list) => tags = list.join(',');
 }

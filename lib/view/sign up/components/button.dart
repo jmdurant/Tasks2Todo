@@ -9,6 +9,7 @@ class AccountButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Hero(
       tag: tag?? "TAG",
       child: GestureDetector(
@@ -20,8 +21,7 @@ class AccountButton extends StatelessWidget {
           margin: const EdgeInsets.symmetric(horizontal: 10),
           decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(15),
-              gradient: const LinearGradient(
-                  colors: [Colors.purpleAccent, Colors.pinkAccent])),
+              color: scheme.primary),
           child: loading
               ? const SizedBox(
                   height: 15,

@@ -8,39 +8,22 @@ class DateContainer extends StatelessWidget {
   final controller = Get.find<HomeController>();
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final ColorScheme scheme = theme.colorScheme;
-    final Color fallbackShadow = theme.shadowColor;
-    var size=MediaQuery.sizeOf(context);
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return Obx(() {
       final bool isSelected = controller.currentIndex.value==index;
       return AnimatedContainer(
         duration: const Duration(milliseconds: 200),
           height: 110,
-          width: 70,
-          margin:  EdgeInsets.only(left: size.width*0.05),
           decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
-              gradient: isSelected
-                  ? LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        scheme.primary,
-                        scheme.secondary,
-                      ],
-                    )
-                  : null,
-              color: isSelected ? null : scheme.surface,
-              boxShadow: [
+              color: isSelected ? scheme.primary : scheme.surfaceContainerHighest,
+              boxShadow: isSelected ? [
                 BoxShadow(
-                  color: isSelected
-                      ? scheme.primary.withValues(alpha: 0.35)
-                      : fallbackShadow.withValues(alpha: 0.08),
-                  offset: const Offset(0, 10),
-                  blurRadius: 20,
+                  color: scheme.primary.withValues(alpha: 0.35),
+                  offset: const Offset(0, 4),
+                  blurRadius: 12,
                 ),
-              ]
+              ] : null,
           ),
           child: Dates(index: index)
       );

@@ -59,11 +59,7 @@ class FloatingButton extends StatelessWidget {
         width: 60,
         decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: LinearGradient(colors: [
-              Theme.of(context).colorScheme.secondary,
-              Theme.of(context).colorScheme.primary,
-              Theme.of(context).colorScheme.primary
-            ])
+            color: Theme.of(context).colorScheme.primary,
         ),
         child: Icon(Icons.add,color: Theme.of(context).colorScheme.onPrimary,),
       ),

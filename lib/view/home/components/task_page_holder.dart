@@ -16,21 +16,8 @@ class TaskPageBody extends StatelessWidget {
                   borderRadius: const BorderRadius.only(
                       topRight: Radius.circular(40),
                       topLeft: Radius.circular(40)),
-                  gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.white.withValues(alpha: 0.6),
-                        Colors.white.withValues(alpha: 0.5),
-                        Colors.white.withValues(alpha: 0.4),
-                        Colors.white.withValues(alpha: 0.3),
-                        Colors.white.withValues(alpha: 0.2),
-                        Colors.white.withValues(alpha: 0.0),
-                        Colors.white.withValues(alpha: 0.0),
-                        Colors.white.withValues(alpha: 0.0),
-                        Colors.white.withValues(alpha: 0.0),
-                        Colors.white.withValues(alpha: 0.0),
-                      ])),
+                  color: Theme.of(context).colorScheme.surfaceContainerLowest,
+              ),
               child:  TaskPageView(),
             )),
         ChangeButtonRow(),

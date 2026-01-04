@@ -15,26 +15,12 @@ class TextFieldSufix extends StatelessWidget {
         width: 40,
         decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            gradient: LinearGradient(
-              colors:[
-                scheme.primary,
-                scheme.secondary,
-                scheme.primary,
-              ]
-            ),
+            color: scheme.primary,
             boxShadow:  [
               BoxShadow(
                   color: shadowColor,
-                  offset: const Offset(1, 0)),
-              BoxShadow(
-                  color: shadowColor,
-                  offset: const Offset(0, 1)),
-              BoxShadow(
-                  color: shadowColor,
-                  offset: const Offset(-1, 0)),
-              BoxShadow(
-                  color: shadowColor,
-                  offset: const Offset(0, -1)),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4)),
             ]),
         child:  Icon(
           icon,

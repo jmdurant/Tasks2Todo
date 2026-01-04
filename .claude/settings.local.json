@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter analyze:*)",
+      "Bash(flutter pub upgrade:*)",
+      "Bash(flutter pub outdated:*)",
+      "Bash(flutter pub get:*)",
+      "Bash(flutter --version:*)",
+      "Bash(git add:*)",
+      "Bash(Get-Content \"C:\\\\Users\\\\docto\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-docto-Tasks2Todo\\\\tasks\\\\bce5a40.output\" -Tail 150)",
+      "Bash(flutter attach:*)",
+      "Bash(taskkill:*)",
+      "Bash(flutter run:*)",
+      "Bash(powershell -Command:*)"
+    ]
+  }
+}

@@ -11,11 +11,13 @@ class Dates extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<HomeController>();
-    final date = DateTime.now().add(Duration(days: index));
+    final ColorScheme scheme = Theme.of(context).colorScheme;
 
     return Obx(() {
+      // Calculate date based on weekOffset
+      final date = DateTime.now().add(Duration(days: index + controller.weekOffset.value * 7));
       final bool isSelected = controller.currentIndex.value == index;
-      final Color textColor = isSelected ? Colors.white : Colors.black;
+      final Color textColor = isSelected ? scheme.onPrimary : scheme.onSurface;
 
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,

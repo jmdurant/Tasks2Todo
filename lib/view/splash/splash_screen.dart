@@ -82,6 +82,13 @@ class _SplashImageState extends State<SplashImage> with SingleTickerProviderStat
       duration: const Duration(milliseconds: 500),
     )..repeat(reverse: true);
   }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -94,32 +101,13 @@ class _SplashImageState extends State<SplashImage> with SingleTickerProviderStat
           padding: EdgeInsets.all(3),
           decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(30),
-              gradient: LinearGradient(colors: [
-                Theme.of(context).colorScheme.primary,
-                Theme.of(context).colorScheme.secondary,
-                Theme.of(context).colorScheme.tertiary ?? Theme.of(context).colorScheme.secondary,
-              ]),
+              color: Theme.of(context).colorScheme.primary,
               boxShadow: [
                 BoxShadow(
-                    offset: const Offset(0,2),
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
-                    blurRadius: 10
+                    offset: const Offset(0, 4),
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
+                    blurRadius: 16
                 ),
-                BoxShadow(
-                    offset: const Offset(0,-2),
-                    color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.3),
-                    blurRadius: 10
-                ),
-                BoxShadow(
-                    offset: const Offset(2,0),
-                    color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.4),
-                    blurRadius: 10
-                ),
-                BoxShadow(
-                    offset: const Offset(-2,0),
-                    color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.4),
-                    blurRadius: 10
-                )
               ]
           ),
           child: Container(

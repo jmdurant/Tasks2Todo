@@ -25,6 +25,12 @@ class UserPref{
     };
   }
 
-
-
+  static Future<void> clearUser() async {
+    SharedPreferences pref = await SharedPreferences.getInstance();
+    await pref.remove('NAME');
+    await pref.remove('EMAIL');
+    await pref.remove('PASSWORD');
+    await pref.remove('NODE');
+    await pref.remove('TOKEN');
+  }
 }

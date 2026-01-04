@@ -6,9 +6,17 @@ import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../../../util/utils.dart';
 import '../../../view/home/home.dart';
+import '../../../view_model/controller/home_controller.dart';
+import '../../../view_model/controller/new_task_controller.dart';
 import '../../../view_model/controller/signin_controller.dart';
 import '../../../view_model/controller/signup_controller.dart';
 import '../../shared pref/shared_pref.dart';
+
+void _navigateToHome() {
+  Get.put(HomeController());
+  Get.put(NewTaskController());
+  Get.off(() => HomePage());
+}
 
 
 class FirebaseService {
@@ -47,7 +55,7 @@ class FirebaseService {
                 Icons.done,
                 color: Colors.white,
               ));
-          Get.to(HomePage());
+          _navigateToHome();
           signUpController.setLoading(false);
         }).onError((error, stackTrace) {
           Utils.showSnackBar(
@@ -106,7 +114,7 @@ class FirebaseService {
                 Icons.done,
                 color: Colors.white,
               ));
-          Get.to(HomePage());
+          _navigateToHome();
           signInController.setLoading(false);
         }).onError((error, stackTrace) {
           Utils.showSnackBar(
@@ -190,7 +198,7 @@ class FirebaseService {
             Icons.done,
             color: Colors.white,
           ));
-      Get.to(HomePage());
+      _navigateToHome();
     } on GoogleSignInException catch (error) {
       Utils.showSnackBar(
           'Error',

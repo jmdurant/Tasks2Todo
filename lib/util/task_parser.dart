@@ -267,7 +267,6 @@ class TaskParser {
       final now = DateTime.now();
       final description = [
         if (parsed.location != null) 'Location: ${parsed.location}',
-        if (parsed.tags.isNotEmpty) 'Tags: ${parsed.tags.join(", ")}',
         if (parsed.note != null) parsed.note,
         if (parsed.reference != null) 'Ref: ${parsed.reference}',
       ].join('\n');
@@ -276,15 +275,16 @@ class TaskParser {
         key: now.microsecondsSinceEpoch.toString(),
         title: parsed.title,
         category: parsed.project ?? 'Inbox',
-        description: description.isEmpty ? 'Quick entry task' : description,
-        image: '0',
+        description: description.isEmpty ? '' : description,
+        image: '',
         periority: parsed.priority,
         startTime: parsed.startTime ?? '',
         endTime: parsed.endTime ?? '',
         date: parsed.date ?? DateFormat('dd/MM/yyyy').format(now),
         show: 'yes',
         status: parsed.status,
+        tags: parsed.tags.join(','),
       );
-  }).toList();
-}
+    }).toList();
+  }
 }

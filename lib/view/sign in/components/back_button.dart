@@ -21,22 +21,15 @@ class CustomBackButton extends StatelessWidget {
           color: scheme.onPrimary,
           size: 18,
         );
-    final List<Color> gradientColors = <Color>[
-      scheme.primary,
-      scheme.secondary,
-    ];
     final Color shadowColor = scheme.primary.withValues(alpha: 0.25);
     return Container(
       height: height,
       width: width,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(radius),
-        gradient: LinearGradient(colors: gradientColors),
+        color: scheme.primary,
         boxShadow: [
-          BoxShadow(color: shadowColor, blurRadius: 12, offset: const Offset(1, 0)),
-          BoxShadow(color: shadowColor, blurRadius: 12, offset: const Offset(0, 1)),
-          BoxShadow(color: shadowColor, blurRadius: 12, offset: const Offset(-1, 0)),
-          BoxShadow(color: shadowColor, blurRadius: 12, offset: const Offset(0, -1)),
+          BoxShadow(color: shadowColor, blurRadius: 12, offset: const Offset(0, 4)),
         ],
       ),
       child: content,

@@ -18,6 +18,7 @@ class Tasks extends Table {
   TextColumn get date => text()();
   TextColumn get show => text()();
   TextColumn get status => text()();
+  TextColumn get tags => text().withDefault(const Constant(''))();
 
   @override
   Set<Column> get primaryKey => {key};
@@ -74,7 +75,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -84,6 +85,9 @@ class AppDatabase extends _$AppDatabase {
         onUpgrade: (Migrator m, int from, int to) async {
           if (from < 2) {
             await m.createTable(projects);
+          }
+          if (from < 3) {
+            await m.addColumn(tasks, tasks.tags);
           }
         },
       );
@@ -111,6 +115,7 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
         date: Value(model.date!),
         show: Value(model.show!),
         status: Value(model.status!),
+        tags: Value(model.tags ?? ''),
       ),
     );
   }
@@ -130,6 +135,7 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
               image: row.image,
               show: row.show,
               status: row.status,
+              tags: row.tags,
             ))
         .toList();
   }
@@ -164,6 +170,77 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
               image: row.image,
               show: row.show,
               status: row.status,
+              tags: row.tags,
+            ))
+        .toList();
+  }
+
+  /// Get tasks for a specific project/category
+  Future<List<TaskModel>> getTasksForProject(String projectName) async {
+    final List<Task> rows = await (select(tasks)
+          ..where((tbl) => tbl.category.equals(projectName)))
+        .get();
+    return rows
+        .map((Task row) => TaskModel(
+              key: row.key,
+              startTime: row.startTime,
+              endTime: row.endTime,
+              date: row.date,
+              periority: row.periority,
+              description: row.description,
+              category: row.category,
+              title: row.title,
+              image: row.image,
+              show: row.show,
+              status: row.status,
+              tags: row.tags,
+            ))
+        .toList();
+  }
+
+  /// Count tasks for a specific project/category
+  Future<int> countTasksForProject(String projectName) async {
+    final query = selectOnly(tasks)
+      ..addColumns([tasks.key.count()])
+      ..where(tasks.category.equals(projectName));
+    final result = await query.getSingle();
+    return result.read(tasks.key.count()) ?? 0;
+  }
+
+  /// Stream of task counts by project
+  Stream<Map<String, int>> watchTaskCountsByProject() {
+    return select(tasks).watch().map((rows) {
+      final counts = <String, int>{};
+      for (final row in rows) {
+        counts[row.category] = (counts[row.category] ?? 0) + 1;
+      }
+      return counts;
+    });
+  }
+
+  /// Search tasks by title, description, category, or tags
+  Future<List<TaskModel>> searchTasks(String query) async {
+    final lowerQuery = query.toLowerCase();
+    final List<Task> rows = await select(tasks).get();
+    return rows
+        .where((row) =>
+            row.title.toLowerCase().contains(lowerQuery) ||
+            row.description.toLowerCase().contains(lowerQuery) ||
+            row.category.toLowerCase().contains(lowerQuery) ||
+            row.tags.toLowerCase().contains(lowerQuery))
+        .map((Task row) => TaskModel(
+              key: row.key,
+              startTime: row.startTime,
+              endTime: row.endTime,
+              date: row.date,
+              periority: row.periority,
+              description: row.description,
+              category: row.category,
+              title: row.title,
+              image: row.image,
+              show: row.show,
+              status: row.status,
+              tags: row.tags,
             ))
         .toList();
   }

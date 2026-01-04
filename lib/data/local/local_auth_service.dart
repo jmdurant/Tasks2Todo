@@ -1,8 +1,11 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../view/home/home.dart';
+import '../../view/sign in/sign_in.dart';
 import '../../util/utils.dart';
 import '../../data/shared pref/shared_pref.dart';
+import '../../view_model/controller/home_controller.dart';
+import '../../view_model/controller/new_task_controller.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 
@@ -28,7 +31,10 @@ class LocalAuthService {
           Icons.done,
           color: Colors.white,
         ));
-    Get.offAll(HomePage());
+    // Register controllers before navigating to HomePage
+    Get.put(HomeController());
+    Get.put(NewTaskController());
+    Get.offAll(() => HomePage());
   }
 
   static Future<String?> login({
@@ -66,5 +72,14 @@ class LocalAuthService {
         ? email.substring(0, email.indexOf('@'))
         : email;
     await UserPref.setUser(name, email, password, node, 'LOCAL_USER');
+  }
+
+  Future<void> signOut() async {
+    await UserPref.clearUser();
+    // Clean up controllers
+    Get.delete<HomeController>(force: true);
+    Get.delete<NewTaskController>(force: true);
+    // Navigate to sign in
+    Get.offAll(() => const SignIn());
   }
 }

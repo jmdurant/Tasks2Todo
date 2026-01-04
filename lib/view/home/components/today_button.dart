@@ -5,33 +5,32 @@ import 'package:todo/view_model/controller/home_controller.dart';
 class TodayButton extends StatelessWidget {
   const TodayButton({super.key});
 
+  void _goToToday(HomeController controller) {
+    controller.weekOffset.value = 0;
+    controller.setIndex(0);
+    controller.getTasks();
+  }
+
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<HomeController>();
     return InkWell(
       borderRadius: BorderRadius.circular(30),
-      onTap: () => controller.pageController.animateToPage(0, duration: Duration(milliseconds: 300), curve: Curves.easeIn),
+      onTap: () => _goToToday(controller),
       child: Container(
-        height: 50,
-        width: 150,
+        height: 44,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
         alignment: Alignment.center,
         decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(30),
             boxShadow:  [
               BoxShadow(
-                  color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.35),
-                  offset: const Offset(0, 5),
-                  blurRadius: 20
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                  offset: const Offset(0, 4),
+                  blurRadius: 8
               )
             ],
-            gradient:  LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Theme.of(context).colorScheme.secondary,
-                  Theme.of(context).colorScheme.primary
-                ]
-            )
+            color: Theme.of(context).colorScheme.primary,
         ),
         child:  Text(
           'Today',style: Theme.of(context).textTheme.titleMedium?.copyWith(

@@ -34,17 +34,13 @@ class InputField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 500),
-      padding: const EdgeInsets.all(1),
+      padding: EdgeInsets.all(focus ? 2 : 0),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(15),
-        gradient: focus
-            ? const LinearGradient(colors: [
-                Colors.purpleAccent,
-                Colors.pink,
-              ])
-            : null,
+        color: focus ? scheme.primary : null,
       ),
       child: TextFormField(
         controller: controller,
@@ -82,11 +78,11 @@ class InputField extends StatelessWidget {
                             ),
                     )
                   : const SizedBox(),
-          fillColor: Colors.white,
+          fillColor: scheme.surface,
           border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(15),
               borderSide: BorderSide.none),
-          hoverColor: Colors.pinkAccent,
+          hoverColor: scheme.primary.withValues(alpha: 0.1),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
           hintText: hint,

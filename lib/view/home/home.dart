@@ -38,7 +38,7 @@ class HomePage extends StatelessWidget {
             // Quick Entry View (index 1)
             const QuickEntryView(),
             // Projects View (index 2)
-            ProjectsView(),
+            const ProjectsView(),
             // Settings View (index 3)
             _SettingsView(),
           ],
@@ -72,13 +72,7 @@ class _SettingsView extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 24),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: SyncModeSwitch(),
-            ),
-          ),
-          const SizedBox(height: 12),
+          SyncModeSwitch(),
           Card(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),

@@ -58,6 +58,18 @@ class DbHelper {
     return _taskDao.getTasksForDates(dates);
   }
 
+  Future<List<TaskModel>> getTasksForProject(String projectName) {
+    return _taskDao.getTasksForProject(projectName);
+  }
+
+  Future<int> countTasksForProject(String projectName) {
+    return _taskDao.countTasksForProject(projectName);
+  }
+
+  Stream<Map<String, int>> watchTaskCountsByProject() {
+    return _taskDao.watchTaskCountsByProject();
+  }
+
   Future<void> addProject({
     required String id,
     required String name,
@@ -80,6 +92,10 @@ class DbHelper {
 
   Future<void> deleteProject(String id) {
     return _projectDao.deleteProject(id);
+  }
+
+  Future<List<TaskModel>> searchTasks(String query) {
+    return _taskDao.searchTasks(query);
   }
 }
 

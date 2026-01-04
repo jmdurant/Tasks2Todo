@@ -12,12 +12,12 @@ class ChangeIconButton extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: scheme.secondary,
+          color: scheme.primary,
           boxShadow: [
             BoxShadow(
-                color: scheme.secondary.withValues(alpha: 0.3),
-                offset: const Offset(0, 10),
-                blurRadius: 10
+                color: scheme.primary.withValues(alpha: 0.3),
+                offset: const Offset(0, 4),
+                blurRadius: 8
             )
           ]
       ),

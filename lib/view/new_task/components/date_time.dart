@@ -41,7 +41,7 @@ class DateTimeInput extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'S-Time',
+                'Start Time',
                 style: Theme.of(context)
                     .textTheme
                     .labelLarge
@@ -63,7 +63,7 @@ class DateTimeInput extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'E-Time',
+                'End Time',
                 style: Theme.of(context)
                     .textTheme
                     .labelLarge
@@ -97,7 +97,7 @@ class DateTimeContainer extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
-        color: scheme.surfaceVariant,
+        color: scheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(

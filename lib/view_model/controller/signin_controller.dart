@@ -5,6 +5,8 @@ import '../../data/local/local_auth_service.dart';
 import '../../data/network/firebase/firebase_services.dart';
 import '../../util/utils.dart';
 import '../../view/home/home.dart';
+import 'home_controller.dart';
+import 'new_task_controller.dart';
 import 'settings_controller.dart';
 
 
@@ -22,11 +24,11 @@ class SignInController extends GetxController{
 
   void loginAccount(){
     if(!correctEmail.value){
-      Utils.showSnackBar('Warning', 'Enter Correct Email', const Icon(FontAwesomeIcons.triangleExclamation,color: Colors.pink,));
+      Utils.showSnackBar('Warning', 'Enter Correct Email', const Icon(FontAwesomeIcons.triangleExclamation,color: Colors.amber,));
       return;
     }
     if(password.value.text.toString().length<6){
-      Utils.showSnackBar('Warning', 'Password length should greater than 5', const Icon(FontAwesomeIcons.triangleExclamation,color: Colors.pink,));
+      Utils.showSnackBar('Warning', 'Password length should greater than 5', const Icon(FontAwesomeIcons.triangleExclamation,color: Colors.amber,));
       return;
     }
 
@@ -71,7 +73,7 @@ class SignInController extends GetxController{
           error,
           const Icon(
             FontAwesomeIcons.triangleExclamation,
-            color: Colors.pink,
+            color: Colors.amber,
           ));
       return;
     }
@@ -82,6 +84,9 @@ class SignInController extends GetxController{
           Icons.done,
           color: Colors.white,
         ));
-    Get.to(HomePage());
+    // Register controllers before navigating to HomePage
+    Get.put(HomeController());
+    Get.put(NewTaskController());
+    Get.off(() => HomePage());
   }
 }

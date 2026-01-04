@@ -1,21 +1,16 @@
 import 'package:flutter/material.dart';
 
-const Color _seedOrange = Color(0xFFFE9B48);
-const Color _seedBlue = Color(0xFF1DBEF9);
+const Color _carolinaBlue = Color(0xFF4B9CD3);
 
 class AppTheme {
   static final ColorScheme _lightScheme = ColorScheme.fromSeed(
-    seedColor: _seedOrange,
+    seedColor: _carolinaBlue,
     brightness: Brightness.light,
-    primary: _seedOrange,
-    secondary: _seedBlue,
   );
 
   static final ColorScheme _darkScheme = ColorScheme.fromSeed(
-    seedColor: _seedBlue,
+    seedColor: _carolinaBlue,
     brightness: Brightness.dark,
-    primary: _seedBlue,
-    secondary: _seedOrange,
   );
 
   static ThemeData get lightTheme => _baseTheme(_lightScheme);

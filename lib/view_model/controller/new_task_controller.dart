@@ -44,6 +44,8 @@ class NewTaskController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    // Initialize category with default project
+    category.value.text = selectedProject.value;
     syncProjects(homeController.projects);
     ever<List<Project>>(homeController.projects, (projList) {
       syncProjects(projList);
@@ -126,18 +128,12 @@ class NewTaskController extends GetxController {
       );
       return;
     }
+    // Default to today if no date selected
     if (selectedDate.isEmpty) {
-      // selectedDate.value =
-      //     '${Utils.addPrefix(DateTime.now().day.toString())}/${Utils.addPrefix(DateTime.now().month.toString())}/${Utils.addPrefix(DateTime.now().year.toString())}';
-      showDatePick(context);
-    }
-    if (startTime.isEmpty) {
-      picStartTime(context);
-      return;
-    }
-    if (endTime.isEmpty) {
-      picEndTime(context);
-      return;
+      final now = DateTime.now();
+      pickedDate = now;
+      selectedDate.value =
+          '${Utils.addPrefix(now.day.toString())}/${Utils.addPrefix(now.month.toString())}/${now.year}';
     }
     loading.value = true;
 
@@ -150,9 +146,10 @@ class NewTaskController extends GetxController {
         description: description.value.text.toString(),
         category: category.value.text.toString(),
         title: label.value.text.toString(),
-        image: selectedImage.value >= 0 ? selectedImage.value.toString() : '',
+        image: '',
         show: 'yes',
-        status: 'unComplete'))
+        status: 'unComplete',
+        tags: ''))
         .then((value) {
 
           // homeController.getTasks();

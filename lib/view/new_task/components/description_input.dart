@@ -17,7 +17,7 @@ class DescriptionInput extends StatelessWidget {
           SizedBox(height: defaultPadding/2,),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Text('Description',style: TextStyle(color: Colors.black,fontWeight: FontWeight.bold),),
+            child: Text('Description',style: TextStyle(color: Theme.of(context).colorScheme.onSurface,fontWeight: FontWeight.bold),),
           ),
           Obx(() => TextInputField(
             controller: controller.description.value,

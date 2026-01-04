@@ -11,26 +11,32 @@ class SyncModeSwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Hide sync options entirely when Firebase is not available
     if (!settingsController.firebaseAvailable) {
-      return const ListTile(
-        title: Text('Cloud sync unavailable'),
-        subtitle: Text('Rebuild with USE_FIREBASE=true to enable Firebase.'),
-      );
+      return const SizedBox.shrink();
     }
     return Obx(() {
       final bool cloudEnabled = !settingsController.useLocalOnly.value;
-      return SwitchListTile(
-        contentPadding: EdgeInsets.zero,
-        title: const Text('Enable cloud sync (Firebase)'),
-        subtitle: Text(
-          cloudEnabled
-              ? 'Tasks sync with Firebase'
-              : 'Local-only mode (default)',
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Enable cloud sync (Firebase)'),
+              subtitle: Text(
+                cloudEnabled
+                    ? 'Tasks sync with Firebase'
+                    : 'Local-only mode (default)',
+              ),
+              value: cloudEnabled,
+              onChanged: (bool value) {
+                settingsController.setUseLocalOnly(!value);
+              },
+            ),
+          ),
         ),
-        value: cloudEnabled,
-        onChanged: (bool value) {
-          settingsController.setUseLocalOnly(!value);
-        },
       );
     });
   }

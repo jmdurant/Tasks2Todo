@@ -20,10 +20,7 @@ class SelectImageList extends StatelessWidget {
             width: 100,
             decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                gradient: LinearGradient(colors: [
-                  Theme.of(context).colorScheme.primary,
-                  Theme.of(context).colorScheme.secondary
-                ])
+                color: Theme.of(context).colorScheme.primary,
             ),
           ),
         ),
@@ -50,15 +47,10 @@ class SelectImageList extends StatelessWidget {
                             padding: const EdgeInsets.all(2),
                             decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(20),
-                                gradient: controller.selectedImage.value==index? LinearGradient(
-                                    colors: [
-                                      Theme.of(context).colorScheme.secondary,
-                                      Theme.of(context).colorScheme.secondaryContainer,
-                                    ]
-                                ): null,
+                                color: controller.selectedImage.value==index ? Theme.of(context).colorScheme.primary : null,
                                 boxShadow: controller.selectedImage.value==index ? [
                                   BoxShadow(
-                                    color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.4),
+                                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
                                     blurRadius: 10,
                                     offset: const Offset(0, 5),
                                   ),

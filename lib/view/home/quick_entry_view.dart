@@ -30,7 +30,6 @@ class _QuickEntryViewState extends State<QuickEntryView> {
   bool isProcessing = false;
   QuickEntryInputMode inputMode = QuickEntryInputMode.text;
   PencilDrawing? lastDrawing;
-  String selectedProject = 'Inbox';
 
   @override
   void initState() {
@@ -71,7 +70,7 @@ class _QuickEntryViewState extends State<QuickEntryView> {
     try {
       final parsedTasks = TaskParser.parseQuickEntry(
         textController.text,
-        defaultProject: selectedProject,
+        defaultProject: 'Inbox',
       );
       final taskModels = TaskParser.convertToTaskModels(parsedTasks);
 
@@ -182,27 +181,6 @@ class _QuickEntryViewState extends State<QuickEntryView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Quick Entry',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: scheme.onSurface,
-                ),
-          ),
-          const SizedBox(height: 8),
-          _buildProjectPicker(context, scheme),
-          const SizedBox(height: 8),
-          Text(
-            inputMode == QuickEntryInputMode.text
-                ? 'Type or paste your tasks here. We\'ll process them later.'
-                : 'Use your stylus to jot a note. We\'ll save the drawing for review.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
-          ),
-          const SizedBox(height: 16),
-          _buildModeToggle(context),
-          const SizedBox(height: 16),
           Expanded(
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 250),
@@ -212,109 +190,52 @@ class _QuickEntryViewState extends State<QuickEntryView> {
             ),
           ),
           const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: ElevatedButton(
-              onPressed: isProcessing ? null : _processEntry,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: scheme.primary,
-                foregroundColor: scheme.onPrimary,
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+          Row(
+            children: [
+              _buildModeToggle(context),
+              const SizedBox(width: 16),
+              Expanded(
+                child: SizedBox(
+                  height: 48,
+                  child: FilledButton(
+                    onPressed: isProcessing ? null : _processEntry,
+                    style: FilledButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: isProcessing
+                        ? SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: scheme.onPrimary,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Text(
+                            inputMode == QuickEntryInputMode.text
+                                ? 'Process Tasks'
+                                : 'Save Entry',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                  ),
                 ),
               ),
-              child: isProcessing
-                  ? SizedBox(
-                      height: 24,
-                      width: 24,
-                      child: CircularProgressIndicator(
-                        color: scheme.onPrimary,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : Text(
-                      inputMode == QuickEntryInputMode.text
-                          ? 'Process Tasks'
-                          : 'Save Stylus Entry',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: scheme.onPrimary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-            ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildProjectPicker(BuildContext context, ColorScheme scheme) {
-    return Obx(() {
-      final projectNames = <String>[
-        'Inbox',
-        ...controller.projects.map((p) => p.name).whereType<String>(),
-      ];
-      if (!projectNames.contains(selectedProject)) {
-        selectedProject = projectNames.first;
-      }
-
-      return Card(
-        color: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Row(
-            children: [
-              Icon(Icons.folder_open, color: scheme.primary),
-              const SizedBox(width: 12),
-              Expanded(
-                child: DropdownButton<String>(
-                  value: selectedProject,
-                  isExpanded: true,
-                  underline: const SizedBox(),
-                  dropdownColor: scheme.surface,
-                  icon: Icon(Icons.arrow_drop_down, color: scheme.onSurfaceVariant),
-                  items: projectNames
-                      .map((name) => DropdownMenuItem<String>(
-                            value: name,
-                            child: Text(
-                              name,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(color: scheme.onSurface),
-                            ),
-                          ))
-                      .toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() {
-                        selectedProject = value;
-                      });
-                    }
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              TextButton.icon(
-                onPressed: () => _showCreateProjectDialog(context, scheme),
-                icon: const Icon(Icons.add),
-                label: const Text('Add project'),
-              )
-            ],
-          ),
-        ),
-      );
-    });
-  }
-
   Widget _buildModeToggle(BuildContext context) {
     final ColorScheme scheme = Theme.of(context).colorScheme;
     return Container(
+      height: 48,
       decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(16),
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: ToggleButtons(
         isSelected: [
@@ -326,29 +247,18 @@ class _QuickEntryViewState extends State<QuickEntryView> {
             inputMode = QuickEntryInputMode.values[index];
           });
         },
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         fillColor: scheme.primary.withValues(alpha: 0.15),
         selectedColor: scheme.primary,
+        constraints: const BoxConstraints(minHeight: 48, minWidth: 56),
         children: const [
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            child: Row(
-              children: [
-                Icon(Icons.keyboard),
-                SizedBox(width: 8),
-                Text('Typing'),
-              ],
-            ),
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: Icon(Icons.keyboard, size: 22),
           ),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            child: Row(
-              children: [
-                Icon(Icons.gesture),
-                SizedBox(width: 8),
-                Text('Stylus'),
-              ],
-            ),
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: Icon(Icons.gesture, size: 22),
           ),
         ],
       ),
@@ -376,23 +286,16 @@ class _QuickEntryViewState extends State<QuickEntryView> {
               color: scheme.onSurface,
             ),
         decoration: InputDecoration(
-          hintText: 'Quick Entry Syntax:\n\n'
-              '+ Project Name\n'
-              '[ ] Todo item\n'
-              '[x] Completed item\n'
-              '[>] Deferred item\n\n'
-              'Metadata:\n'
-              '@tag - Context (@phone, @errands)\n'
-              '> date - Due date (> Fri, > tomorrow)\n'
-              '~ time - Time (~ 9am, ~ 14:00)\n'
-              '^ place - Location (^ Home Depot)\n'
-              '! or !! or !!! - Priority\n'
-              ': text - Note\n\n'
+          hintText: '+ Project Name\n'
+              '[ ] Task  [x] Done  [>] Deferred\n\n'
+              '@tag   > date   ~ time   ^ place\n'
+              '!  !!  !!!   : note   # ref\n'
+              '// comment line\n\n'
               'Example:\n'
               '+ Kitchen Reno\n'
-              '[ ] Buy tiles ^ Home Depot @errands !!\n'
-              '  > Sat ~ 2pm : Check stock first\n'
-              '[x] Measure countertops',
+              '[ ] Buy tiles @errands > Sat ~ 2pm !!\n'
+              '[ ] Call contractor ^ office @phone\n'
+              '[x] Measure countertops : done yesterday',
           hintStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
               ),
@@ -462,125 +365,4 @@ class _QuickEntryViewState extends State<QuickEntryView> {
     );
   }
 
-  Future<void> _showCreateProjectDialog(
-      BuildContext context, ColorScheme scheme) async {
-    final TextEditingController nameController = TextEditingController();
-    final TextEditingController descriptionController =
-        TextEditingController();
-    Color selectedColor = scheme.primary;
-    final palette = [
-      scheme.primary,
-      scheme.secondary,
-      scheme.tertiary,
-      scheme.primaryContainer,
-      scheme.secondaryContainer,
-      scheme.tertiaryContainer,
-    ];
-
-    await showDialog(
-      context: context,
-      builder: (ctx) {
-        return StatefulBuilder(builder: (ctx, dialogSetState) {
-          return AlertDialog(
-            title: const Text('New Project'),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: nameController,
-                    decoration: const InputDecoration(labelText: 'Name'),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: descriptionController,
-                    decoration:
-                        const InputDecoration(labelText: 'Description (optional)'),
-                  ),
-                  const SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Color',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: scheme.onSurfaceVariant),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: palette
-                        .map(
-                          (color) => GestureDetector(
-                            onTap: () => dialogSetState(() => selectedColor = color),
-                            child: Container(
-                              width: 28,
-                              height: 28,
-                              decoration: BoxDecoration(
-                                color: color,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: selectedColor == color
-                                      ? scheme.onPrimary
-                                      : scheme.outlineVariant,
-                                  width: selectedColor == color ? 2 : 1,
-                                ),
-                              ),
-                            ),
-                          ),
-                        )
-                        .toList(),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('Cancel'),
-              ),
-              FilledButton(
-                onPressed: () async {
-                  final name = nameController.text.trim();
-                  final description = descriptionController.text.trim();
-                  if (name.isEmpty) {
-                    Get.snackbar(
-                      'Name required',
-                      'Please provide a project name.',
-                      snackPosition: SnackPosition.BOTTOM,
-                      backgroundColor: scheme.errorContainer,
-                      colorText: scheme.onErrorContainer,
-                    );
-                    return;
-                  }
-                  await controller.createProject(
-                    name: name,
-                    description: description.isEmpty ? null : description,
-                    color: selectedColor,
-                  );
-                  if (mounted) {
-                    setState(() {
-                      selectedProject = name;
-                    });
-                    Navigator.of(ctx).pop();
-                  }
-                  Get.snackbar(
-                    'Project added',
-                    '"$name" is ready for tasks.',
-                    snackPosition: SnackPosition.BOTTOM,
-                    backgroundColor: scheme.primaryContainer,
-                    colorText: scheme.onPrimaryContainer,
-                  );
-                },
-                child: const Text('Create'),
-              ),
-            ],
-          );
-        });
-      },
-    );
-  }
 }

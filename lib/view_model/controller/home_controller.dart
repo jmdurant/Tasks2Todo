@@ -6,6 +6,7 @@ import 'package:todo/data/local/database/app_database.dart';
 import 'package:todo/db_helper/db_helper.dart';
 import 'package:todo/model/task_model.dart';
 import 'package:todo/util/utils.dart';
+import 'package:todo/view/home/task_detail_view.dart';
 import '../../data/shared pref/shared_pref.dart';
 
 class HomeController extends GetxController {
@@ -26,6 +27,8 @@ class HomeController extends GetxController {
   final ScrollController scrollController = ScrollController();
   final RxList<Project> projects = <Project>[].obs;
   StreamSubscription<List<Project>>? _projectSubscription;
+  final RxMap<String, int> taskCountsByProject = <String, int>{}.obs;
+  StreamSubscription<Map<String, int>>? _taskCountsSubscription;
 
   /// Total count of all tasks across all days (for Inbox display)
   int get totalTaskCount => list.fold(0, (sum, dayList) => sum + dayList.length);
@@ -55,11 +58,15 @@ class HomeController extends GetxController {
     _projectSubscription = db.watchProjects().listen((event) {
       projects.assignAll(event);
     });
+    _taskCountsSubscription = db.watchTaskCountsByProject().listen((counts) {
+      taskCountsByProject.assignAll(counts);
+    });
   }
 
   @override
   void onClose() {
     _projectSubscription?.cancel();
+    _taskCountsSubscription?.cancel();
     super.onClose();
   }
 
@@ -131,6 +138,12 @@ class HomeController extends GetxController {
   }
   onTaskComplete(int value, int index, int ind, String key, BuildContext context) {
     switch (value) {
+      case 1:
+        {
+          // Edit task
+          final task = list[ind][index];
+          Get.to(() => TaskDetailView(task: task, dayIndex: ind));
+        }
       case 3:
         {
           Utils.showWarningDialog(context, 'Complete Task',

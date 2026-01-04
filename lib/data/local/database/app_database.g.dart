@@ -68,6 +68,13 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
   late final GeneratedColumn<String> status = GeneratedColumn<String>(
       'status', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _tagsMeta = const VerificationMeta('tags');
+  @override
+  late final GeneratedColumn<String> tags = GeneratedColumn<String>(
+      'tags', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(''));
   @override
   List<GeneratedColumn> get $columns => [
         key,
@@ -80,7 +87,8 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
         endTime,
         date,
         show,
-        status
+        status,
+        tags
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -160,6 +168,10 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
     } else if (isInserting) {
       context.missing(_statusMeta);
     }
+    if (data.containsKey('tags')) {
+      context.handle(
+          _tagsMeta, tags.isAcceptableOrUnknown(data['tags']!, _tagsMeta));
+    }
     return context;
   }
 
@@ -191,6 +203,8 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
           .read(DriftSqlType.string, data['${effectivePrefix}show'])!,
       status: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}status'])!,
+      tags: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}tags'])!,
     );
   }
 
@@ -212,6 +226,7 @@ class Task extends DataClass implements Insertable<Task> {
   final String date;
   final String show;
   final String status;
+  final String tags;
   const Task(
       {required this.key,
       required this.title,
@@ -223,7 +238,8 @@ class Task extends DataClass implements Insertable<Task> {
       required this.endTime,
       required this.date,
       required this.show,
-      required this.status});
+      required this.status,
+      required this.tags});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -238,6 +254,7 @@ class Task extends DataClass implements Insertable<Task> {
     map['date'] = Variable<String>(date);
     map['show'] = Variable<String>(show);
     map['status'] = Variable<String>(status);
+    map['tags'] = Variable<String>(tags);
     return map;
   }
 
@@ -254,6 +271,7 @@ class Task extends DataClass implements Insertable<Task> {
       date: Value(date),
       show: Value(show),
       status: Value(status),
+      tags: Value(tags),
     );
   }
 
@@ -272,6 +290,7 @@ class Task extends DataClass implements Insertable<Task> {
       date: serializer.fromJson<String>(json['date']),
       show: serializer.fromJson<String>(json['show']),
       status: serializer.fromJson<String>(json['status']),
+      tags: serializer.fromJson<String>(json['tags']),
     );
   }
   @override
@@ -289,6 +308,7 @@ class Task extends DataClass implements Insertable<Task> {
       'date': serializer.toJson<String>(date),
       'show': serializer.toJson<String>(show),
       'status': serializer.toJson<String>(status),
+      'tags': serializer.toJson<String>(tags),
     };
   }
 
@@ -303,7 +323,8 @@ class Task extends DataClass implements Insertable<Task> {
           String? endTime,
           String? date,
           String? show,
-          String? status}) =>
+          String? status,
+          String? tags}) =>
       Task(
         key: key ?? this.key,
         title: title ?? this.title,
@@ -316,6 +337,7 @@ class Task extends DataClass implements Insertable<Task> {
         date: date ?? this.date,
         show: show ?? this.show,
         status: status ?? this.status,
+        tags: tags ?? this.tags,
       );
   Task copyWithCompanion(TasksCompanion data) {
     return Task(
@@ -331,6 +353,7 @@ class Task extends DataClass implements Insertable<Task> {
       date: data.date.present ? data.date.value : this.date,
       show: data.show.present ? data.show.value : this.show,
       status: data.status.present ? data.status.value : this.status,
+      tags: data.tags.present ? data.tags.value : this.tags,
     );
   }
 
@@ -347,14 +370,15 @@ class Task extends DataClass implements Insertable<Task> {
           ..write('endTime: $endTime, ')
           ..write('date: $date, ')
           ..write('show: $show, ')
-          ..write('status: $status')
+          ..write('status: $status, ')
+          ..write('tags: $tags')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode => Object.hash(key, title, category, description, image,
-      periority, startTime, endTime, date, show, status);
+      periority, startTime, endTime, date, show, status, tags);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -369,7 +393,8 @@ class Task extends DataClass implements Insertable<Task> {
           other.endTime == this.endTime &&
           other.date == this.date &&
           other.show == this.show &&
-          other.status == this.status);
+          other.status == this.status &&
+          other.tags == this.tags);
 }
 
 class TasksCompanion extends UpdateCompanion<Task> {
@@ -384,6 +409,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
   final Value<String> date;
   final Value<String> show;
   final Value<String> status;
+  final Value<String> tags;
   final Value<int> rowid;
   const TasksCompanion({
     this.key = const Value.absent(),
@@ -397,6 +423,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     this.date = const Value.absent(),
     this.show = const Value.absent(),
     this.status = const Value.absent(),
+    this.tags = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   TasksCompanion.insert({
@@ -411,6 +438,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     required String date,
     required String show,
     required String status,
+    this.tags = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : key = Value(key),
         title = Value(title),
@@ -435,6 +463,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     Expression<String>? date,
     Expression<String>? show,
     Expression<String>? status,
+    Expression<String>? tags,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -449,6 +478,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
       if (date != null) 'date': date,
       if (show != null) 'show': show,
       if (status != null) 'status': status,
+      if (tags != null) 'tags': tags,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -465,6 +495,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
       Value<String>? date,
       Value<String>? show,
       Value<String>? status,
+      Value<String>? tags,
       Value<int>? rowid}) {
     return TasksCompanion(
       key: key ?? this.key,
@@ -478,6 +509,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
       date: date ?? this.date,
       show: show ?? this.show,
       status: status ?? this.status,
+      tags: tags ?? this.tags,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -518,6 +550,9 @@ class TasksCompanion extends UpdateCompanion<Task> {
     if (status.present) {
       map['status'] = Variable<String>(status.value);
     }
+    if (tags.present) {
+      map['tags'] = Variable<String>(tags.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -538,6 +573,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
           ..write('date: $date, ')
           ..write('show: $show, ')
           ..write('status: $status, ')
+          ..write('tags: $tags, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1909,6 +1945,7 @@ typedef $$TasksTableCreateCompanionBuilder = TasksCompanion Function({
   required String date,
   required String show,
   required String status,
+  Value<String> tags,
   Value<int> rowid,
 });
 typedef $$TasksTableUpdateCompanionBuilder = TasksCompanion Function({
@@ -1923,6 +1960,7 @@ typedef $$TasksTableUpdateCompanionBuilder = TasksCompanion Function({
   Value<String> date,
   Value<String> show,
   Value<String> status,
+  Value<String> tags,
   Value<int> rowid,
 });
 
@@ -1966,6 +2004,9 @@ class $$TasksTableFilterComposer extends Composer<_$AppDatabase, $TasksTable> {
 
   ColumnFilters<String> get status => $composableBuilder(
       column: $table.status, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get tags => $composableBuilder(
+      column: $table.tags, builder: (column) => ColumnFilters(column));
 }
 
 class $$TasksTableOrderingComposer
@@ -2009,6 +2050,9 @@ class $$TasksTableOrderingComposer
 
   ColumnOrderings<String> get status => $composableBuilder(
       column: $table.status, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get tags => $composableBuilder(
+      column: $table.tags, builder: (column) => ColumnOrderings(column));
 }
 
 class $$TasksTableAnnotationComposer
@@ -2052,6 +2096,9 @@ class $$TasksTableAnnotationComposer
 
   GeneratedColumn<String> get status =>
       $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get tags =>
+      $composableBuilder(column: $table.tags, builder: (column) => column);
 }
 
 class $$TasksTableTableManager extends RootTableManager<
@@ -2088,6 +2135,7 @@ class $$TasksTableTableManager extends RootTableManager<
             Value<String> date = const Value.absent(),
             Value<String> show = const Value.absent(),
             Value<String> status = const Value.absent(),
+            Value<String> tags = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               TasksCompanion(
@@ -2102,6 +2150,7 @@ class $$TasksTableTableManager extends RootTableManager<
             date: date,
             show: show,
             status: status,
+            tags: tags,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -2116,6 +2165,7 @@ class $$TasksTableTableManager extends RootTableManager<
             required String date,
             required String show,
             required String status,
+            Value<String> tags = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               TasksCompanion.insert(
@@ -2130,6 +2180,7 @@ class $$TasksTableTableManager extends RootTableManager<
             date: date,
             show: show,
             status: status,
+            tags: tags,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
