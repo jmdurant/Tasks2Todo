@@ -17,19 +17,12 @@ class TaskTitle extends StatelessWidget {
     final ColorScheme scheme = Theme.of(context).colorScheme;
     final List<Color> palette = Utils.tagColors(context);
 
-    // Derive stable indices from task key hash to prevent flickering
-    final int hash = task.key?.hashCode ?? 0;
-    final int colorIndex1 = hash.abs() % palette.length;
-    final int colorIndex2 = (hash.abs() ~/ palette.length) % palette.length;
-    final int tagIndex1 = hash.abs() % Utils.tags.length;
-    final int tagIndex2 = (hash.abs() ~/ Utils.tags.length) % Utils.tags.length;
-
-    final Color colorOne = palette[colorIndex1];
-    final Color colorTwo = palette[colorIndex2];
+    // Get actual tags from task
+    final List<String> taskTags = task.tagList;
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           task.title ?? '',
@@ -39,42 +32,40 @@ class TaskTitle extends StatelessWidget {
               ) ??
               const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
-        Text(
-          '${task.startTime} - ${task.endTime}',
-          style: textTheme.bodySmall?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
-        ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Container(
-              alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 10),
-              decoration: BoxDecoration(
-                color: colorOne.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                Utils.tags[tagIndex1],
-                style: TextStyle(color: colorOne, fontWeight: FontWeight.w600),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Container(
-              alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 10),
-              decoration: BoxDecoration(
-                color: colorTwo.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                Utils.tags[tagIndex2],
-                style: TextStyle(color: colorTwo, fontWeight: FontWeight.w600),
-              ),
-            )
-          ],
-        ),
+        if (task.startTime?.isNotEmpty == true || task.endTime?.isNotEmpty == true)
+          Text(
+            '${task.startTime ?? ''} ${task.startTime?.isNotEmpty == true && task.endTime?.isNotEmpty == true ? '-' : ''} ${task.endTime ?? ''}'.trim(),
+            style: textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+          ),
+        if (taskTags.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: taskTags.asMap().entries.map((entry) {
+              final int idx = entry.key;
+              final String tag = entry.value;
+              final Color tagColor = palette[idx % palette.length];
+              return Container(
+                padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 10),
+                decoration: BoxDecoration(
+                  color: tagColor.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '@$tag',
+                  style: TextStyle(
+                    color: tagColor,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
       ],
     );
   }
