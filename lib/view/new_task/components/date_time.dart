@@ -9,78 +9,182 @@ class DateTimeInput extends StatelessWidget {
 
   final controller = Get.put(NewTaskController());
 
+  static const _reminderOptions = <int, String>{
+    -1: 'None',
+    0: 'At time',
+    5: '5 min before',
+    15: '15 min before',
+    30: '30 min before',
+    60: '1 hour before',
+  };
+
   @override
   Widget build(BuildContext context) {
+    final labelStyle = Theme.of(context)
+        .textTheme
+        .labelLarge
+        ?.copyWith(fontWeight: FontWeight.bold);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          // Date & Time row
+          Row(
             children: [
-              Text(
-                'Date',
-                style: Theme.of(context)
-                    .textTheme
-                    .labelLarge
-                    ?.copyWith(fontWeight: FontWeight.bold),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Date', style: labelStyle),
+                  const SizedBox(height: defaultPadding / 2),
+                  InkWell(
+                      onTap: () => controller.showDatePick(context),
+                      child: Obx(() => DateTimeContainer(
+                          text: controller.selectedDate.isEmpty
+                              ? 'dd/mm/yyyy'
+                              : controller.selectedDate.value)))
+                ],
               ),
-              const SizedBox(
-                height: defaultPadding / 2,
+              const Spacer(),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Start Time', style: labelStyle),
+                  const SizedBox(height: defaultPadding / 2),
+                  InkWell(
+                      onTap: () => controller.picStartTime(context),
+                      child: Obx(() => DateTimeContainer(
+                          text: controller.startTime.isEmpty
+                              ? "hh:mm:a"
+                              : controller.startTime.value)))
+                ],
               ),
-              InkWell(
-                  onTap: () => controller.showDatePick(context),
-                  child: Obx(() => DateTimeContainer(
-                      text: controller.selectedDate.isEmpty
-                          ? 'dd/mm/yyyy'
-                          : controller.selectedDate.value)))
+              const Spacer(),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('End Time', style: labelStyle),
+                  const SizedBox(height: defaultPadding / 2),
+                  InkWell(
+                      onTap: () => controller.picEndTime(context),
+                      child: Obx(() => DateTimeContainer(
+                          text: controller.endTime.isEmpty
+                              ? "hh:mm:a"
+                              : controller.endTime.value)))
+                ],
+              ),
             ],
           ),
-          const Spacer(),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 20),
+          // Recurrence & Reminder row
+          Row(
             children: [
-              Text(
-                'Start Time',
-                style: Theme.of(context)
-                    .textTheme
-                    .labelLarge
-                    ?.copyWith(fontWeight: FontWeight.bold),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Repeat', style: labelStyle),
+                    const SizedBox(height: defaultPadding / 2),
+                    Obx(() => _RecurrenceSelector(
+                          value: controller.selectedRecurrence.value,
+                          onChanged: (v) => controller.selectedRecurrence.value = v,
+                        )),
+                  ],
+                ),
               ),
-              const SizedBox(
-                height: defaultPadding / 2,
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Reminder', style: labelStyle),
+                    const SizedBox(height: defaultPadding / 2),
+                    Obx(() => _ReminderSelector(
+                          value: controller.selectedReminderMinutes.value,
+                          options: _reminderOptions,
+                          onChanged: (v) => controller.selectedReminderMinutes.value = v,
+                        )),
+                  ],
+                ),
               ),
-              InkWell(
-                  onTap: () => controller.picStartTime(context),
-                  child: Obx(() => DateTimeContainer(
-                      text: controller.startTime.isEmpty
-                          ? "hh:mm:a"
-                          : controller.startTime.value)))
-            ],
-          ),
-          const Spacer(),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'End Time',
-                style: Theme.of(context)
-                    .textTheme
-                    .labelLarge
-                    ?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(
-                height: defaultPadding / 2,
-              ),
-              InkWell(
-                  onTap: () => controller.picEndTime(context),
-                  child: Obx(() => DateTimeContainer(
-                      text: controller.endTime.isEmpty
-                          ? "hh:mm:a"
-                          : controller.endTime.value)))
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _RecurrenceSelector extends StatelessWidget {
+  final String value;
+  final ValueChanged<String> onChanged;
+
+  const _RecurrenceSelector({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          isExpanded: true,
+          isDense: true,
+          icon: Icon(Icons.repeat, size: 16, color: scheme.primary),
+          items: const [
+            DropdownMenuItem(value: 'none', child: Text('None')),
+            DropdownMenuItem(value: 'daily', child: Text('Daily')),
+            DropdownMenuItem(value: 'weekly', child: Text('Weekly')),
+            DropdownMenuItem(value: 'monthly', child: Text('Monthly')),
+          ],
+          onChanged: (v) {
+            if (v != null) onChanged(v);
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _ReminderSelector extends StatelessWidget {
+  final int value;
+  final Map<int, String> options;
+  final ValueChanged<int> onChanged;
+
+  const _ReminderSelector({
+    required this.value,
+    required this.options,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<int>(
+          value: value,
+          isExpanded: true,
+          isDense: true,
+          icon: Icon(Icons.notifications_none, size: 16, color: scheme.primary),
+          items: options.entries
+              .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
+              .toList(),
+          onChanged: (v) {
+            if (v != null) onChanged(v);
+          },
+        ),
       ),
     );
   }

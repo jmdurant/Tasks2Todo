@@ -40,7 +40,7 @@ class _SplashViewState extends State<SplashView> {
                           child: LinearProgressIndicator(
                             value: value,
                             color: Theme.of(context).colorScheme.primary,
-                            backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+                            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
 
                           ),
                         ),

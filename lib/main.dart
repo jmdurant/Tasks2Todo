@@ -6,6 +6,7 @@ import 'package:todo/config/app_config.dart';
 import 'package:todo/theme/app_theme.dart';
 import 'package:todo/view/splash/splash_screen.dart';
 import 'package:todo/view_model/controller/settings_controller.dart';
+import 'package:todo/view_model/services/notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,6 +17,12 @@ Future<void> main() async {
   final SettingsController settingsController =
       Get.put(SettingsController(), permanent: true);
   await settingsController.initialize();
+
+  // Initialize notifications and reschedule existing reminders
+  await NotificationService.instance.initialize();
+  await NotificationService.instance.requestPermission();
+  NotificationService.instance.rescheduleAllReminders();
+
   runApp(const MyApp());
 }
 

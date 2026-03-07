@@ -26,7 +26,7 @@ class TextInputField extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
           color: focus
               ? Theme.of(context).colorScheme.primary
-              : Theme.of(context).colorScheme.surfaceVariant),
+              : Theme.of(context).colorScheme.surfaceContainerHighest),
       child: TextFormField(
         controller: controller,
         onTapOutside: (event) {

@@ -5,6 +5,7 @@ import 'package:todo/db_helper/db_helper.dart';
 import 'package:todo/model/task_model.dart';
 import 'package:todo/util/utils.dart';
 import 'package:todo/view_model/controller/home_controller.dart';
+import 'package:todo/view_model/services/notification_service.dart';
 
 class NewTaskController extends GetxController {
   DateTime? pickedDate;
@@ -18,6 +19,9 @@ class NewTaskController extends GetxController {
   RxString startTime = ''.obs;
   RxString endTime = ''.obs;
   RxBool loading = false.obs;
+  RxString selectedRecurrence = 'none'.obs;
+  RxInt selectedReminderMinutes = (-1).obs; // -1 = no reminder
+  RxList<String> selectedTags = <String>[].obs;
   final HomeController homeController = Get.find<HomeController>();
   final label = TextEditingController().obs;
   final description = TextEditingController().obs;
@@ -52,7 +56,7 @@ class NewTaskController extends GetxController {
     });
   }
 
-  picStartTime(BuildContext context) async {
+  Future<void> picStartTime(BuildContext context) async {
     var picker =
         await showTimePicker(context: context, initialTime: TimeOfDay.now());
     if (picker != null) {
@@ -60,7 +64,7 @@ class NewTaskController extends GetxController {
           '${Utils.addPrefix(picker.hourOfPeriod.toString())}:${Utils.addPrefix(picker.minute.toString())}:${picker.period.name.toUpperCase()}';
     }
   }
-  picEndTime(BuildContext context) async {
+  Future<void> picEndTime(BuildContext context) async {
     var picker =
         await showTimePicker(context: context, initialTime: TimeOfDay.now());
     if (picker != null) {
@@ -68,42 +72,42 @@ class NewTaskController extends GetxController {
           '${Utils.addPrefix(picker.hourOfPeriod.toString())}:${Utils.addPrefix(picker.minute.toString())}:${picker.period.name.toUpperCase()}';
     }
   }
-  showDatePick(BuildContext context) async {
+  Future<void> showDatePick(BuildContext context) async {
     var picker = await showDatePicker(
         context: context,
         initialDate: DateTime.now(),
         firstDate: DateTime.now(),
-        lastDate: DateTime.now().add(const Duration(days: 7)));
+        lastDate: DateTime.now().add(const Duration(days: 365)));
     if (picker != null) {
       pickedDate=picker;
       selectedDate.value =
           '${Utils.addPrefix(picker.day.toString())}/${Utils.addPrefix(picker.month.toString())}/${picker.year}';
     }
   }
-  changeImage(int index) {
+  void changeImage(int index) {
     selectedImage.value = index;
   }
-  setLabelFocus() {
+  void setLabelFocus() {
     labelFocus.value = true;
     categoryFocus.value = false;
     descriptionFocus.value = false;
   }
-  setCategoryFocus() {
+  void setCategoryFocus() {
     labelFocus.value = false;
     categoryFocus.value = true;
     descriptionFocus.value = false;
   }
-  setDescriptionFocus() {
+  void setDescriptionFocus() {
     labelFocus.value = false;
     categoryFocus.value = false;
     descriptionFocus.value = true;
   }
-  onTapOutside() {
+  void onTapOutside() {
     labelFocus.value = false;
     categoryFocus.value = false;
     descriptionFocus.value = false;
   }
-  insertTask(BuildContext context) {
+  void insertTask(BuildContext context) {
     final ColorScheme scheme = Theme.of(context).colorScheme;
 
     if (label.value.text.toString().isEmpty) {
@@ -137,7 +141,7 @@ class NewTaskController extends GetxController {
     }
     loading.value = true;
 
-    db.insert(TaskModel(
+    final newTask = TaskModel(
         key: DateTime.now().microsecondsSinceEpoch.toString(),
         startTime: startTime.value,
         endTime: endTime.value,
@@ -149,14 +153,19 @@ class NewTaskController extends GetxController {
         image: '',
         show: 'yes',
         status: 'unComplete',
-        tags: ''))
-        .then((value) {
+        tags: selectedTags.join(','),
+        recurrence: selectedRecurrence.value,
+        reminderMinutesBefore: selectedReminderMinutes.value,
+    );
 
-          // homeController.getTasks();
+    db.insert(newTask).then((value) {
+      // Schedule reminder if set
+      if (value.hasReminder) {
+        NotificationService.instance.scheduleTaskReminder(value);
+      }
 
       Duration dif = pickedDate!.difference(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day));
       if (dif.inDays >= 0 && dif.inDays < 7) {
-        // Add to local state - create new list to trigger reactivity
         final updatedDay = List<TaskModel>.from(homeController.list[dif.inDays]);
         updatedDay.add(value);
         homeController.list[dif.inDays] = updatedDay;

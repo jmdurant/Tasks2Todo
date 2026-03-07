@@ -29,27 +29,54 @@ class Grid extends StatelessWidget {
    Grid({super.key, required this.crossAsis, required this.ratio, required this.ind});
   @override
   Widget build(BuildContext context) {
-    return Obx(() => controller.list[ind].isEmpty ? const Center(
-      child: Text('No Task Today',style: TextStyle(color: Colors.black,fontWeight: FontWeight.bold),),
-    ) :GridView.builder(
-      padding: const EdgeInsets.only(top: 40),
-      itemCount: controller.list[ind].length,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: crossAsis, childAspectRatio: ratio),
-      itemBuilder: (context, index) {
-          return TaskDetailContainer(index: index,ind: ind,);
-      },
-    ));
+    return Obx(() {
+      final filteredTasks = controller.filteredTasksForDay(ind);
+      final hasFilters = controller.hasActiveFilters;
+
+      if (filteredTasks.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                hasFilters ? 'No tasks match filters' : 'No tasks for this day',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              if (hasFilters) ...[
+                const SizedBox(height: 12),
+                TextButton.icon(
+                  onPressed: () => controller.resetFilters(),
+                  icon: Icon(Icons.clear_all, size: 18, color: Theme.of(context).colorScheme.primary),
+                  label: Text(
+                    'Clear filters',
+                    style: TextStyle(color: Theme.of(context).colorScheme.primary),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      }
+
+      return GridView.builder(
+        padding: const EdgeInsets.only(top: 40),
+        itemCount: filteredTasks.length,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAsis, childAspectRatio: ratio),
+        itemBuilder: (context, index) {
+          return TaskDetailContainer(
+            index: index,
+            ind: ind,
+            filteredTasks: filteredTasks,
+          );
+        },
+      );
+    });
   }
 }
-
-
-
-
-
-
-
-
 
 
 

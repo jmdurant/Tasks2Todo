@@ -19,6 +19,10 @@ class Tasks extends Table {
   TextColumn get show => text()();
   TextColumn get status => text()();
   TextColumn get tags => text().withDefault(const Constant(''))();
+  // Recurrence: 'none', 'daily', 'weekly', 'monthly'
+  TextColumn get recurrence => text().withDefault(const Constant('none'))();
+  // Minutes before task start time to send reminder (0 = at time, -1 = no reminder)
+  IntColumn get reminderMinutesBefore => integer().withDefault(const Constant(-1))();
 
   @override
   Set<Column> get primaryKey => {key};
@@ -74,11 +78,16 @@ class Projects extends Table {
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
+  AppDatabase.forTesting(super.e);
+
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
+        beforeOpen: (details) async {
+          await customStatement('PRAGMA foreign_keys = ON');
+        },
         onCreate: (Migrator m) async {
           await m.createAll();
         },
@@ -88,6 +97,10 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 3) {
             await m.addColumn(tasks, tasks.tags);
+          }
+          if (from < 4) {
+            await m.addColumn(tasks, tasks.recurrence);
+            await m.addColumn(tasks, tasks.reminderMinutesBefore);
           }
         },
       );
@@ -100,6 +113,23 @@ LazyDatabase _openConnection() {
 @DriftAccessor(tables: [Tasks])
 class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
   TaskDao(super.db);
+
+  TaskModel _rowToModel(Task row) => TaskModel(
+        key: row.key,
+        startTime: row.startTime,
+        endTime: row.endTime,
+        date: row.date,
+        periority: row.periority,
+        description: row.description,
+        category: row.category,
+        title: row.title,
+        image: row.image,
+        show: row.show,
+        status: row.status,
+        tags: row.tags,
+        recurrence: row.recurrence,
+        reminderMinutesBefore: row.reminderMinutesBefore,
+      );
 
   Future<void> insertTask(TaskModel model) {
     return into(tasks).insertOnConflictUpdate(
@@ -116,28 +146,15 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
         show: Value(model.show!),
         status: Value(model.status!),
         tags: Value(model.tags ?? ''),
+        recurrence: Value(model.recurrence ?? 'none'),
+        reminderMinutesBefore: Value(model.reminderMinutesBefore ?? -1),
       ),
     );
   }
 
   Future<List<TaskModel>> getAllTasks() async {
     final List<Task> rows = await select(tasks).get();
-    return rows
-        .map((Task row) => TaskModel(
-              key: row.key,
-              startTime: row.startTime,
-              endTime: row.endTime,
-              date: row.date,
-              periority: row.periority,
-              description: row.description,
-              category: row.category,
-              title: row.title,
-              image: row.image,
-              show: row.show,
-              status: row.status,
-              tags: row.tags,
-            ))
-        .toList();
+    return rows.map(_rowToModel).toList();
   }
 
   Future<int> deleteTask(String keyValue) {
@@ -157,22 +174,7 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
     final List<Task> rows = await (select(tasks)
           ..where((tbl) => tbl.date.isIn(dates)))
         .get();
-    return rows
-        .map((Task row) => TaskModel(
-              key: row.key,
-              startTime: row.startTime,
-              endTime: row.endTime,
-              date: row.date,
-              periority: row.periority,
-              description: row.description,
-              category: row.category,
-              title: row.title,
-              image: row.image,
-              show: row.show,
-              status: row.status,
-              tags: row.tags,
-            ))
-        .toList();
+    return rows.map(_rowToModel).toList();
   }
 
   /// Get tasks for a specific project/category
@@ -180,22 +182,17 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
     final List<Task> rows = await (select(tasks)
           ..where((tbl) => tbl.category.equals(projectName)))
         .get();
-    return rows
-        .map((Task row) => TaskModel(
-              key: row.key,
-              startTime: row.startTime,
-              endTime: row.endTime,
-              date: row.date,
-              periority: row.periority,
-              description: row.description,
-              category: row.category,
-              title: row.title,
-              image: row.image,
-              show: row.show,
-              status: row.status,
-              tags: row.tags,
-            ))
-        .toList();
+    return rows.map(_rowToModel).toList();
+  }
+
+  /// Get all tasks grouped by project/category
+  Future<Map<String, List<TaskModel>>> getAllTasksGroupedByProject() async {
+    final List<Task> rows = await select(tasks).get();
+    final Map<String, List<TaskModel>> grouped = {};
+    for (final row in rows) {
+      (grouped[row.category] ??= []).add(_rowToModel(row));
+    }
+    return grouped;
   }
 
   /// Count tasks for a specific project/category
@@ -220,29 +217,25 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
 
   /// Search tasks by title, description, category, or tags
   Future<List<TaskModel>> searchTasks(String query) async {
-    final lowerQuery = query.toLowerCase();
-    final List<Task> rows = await select(tasks).get();
-    return rows
-        .where((row) =>
-            row.title.toLowerCase().contains(lowerQuery) ||
-            row.description.toLowerCase().contains(lowerQuery) ||
-            row.category.toLowerCase().contains(lowerQuery) ||
-            row.tags.toLowerCase().contains(lowerQuery))
-        .map((Task row) => TaskModel(
-              key: row.key,
-              startTime: row.startTime,
-              endTime: row.endTime,
-              date: row.date,
-              periority: row.periority,
-              description: row.description,
-              category: row.category,
-              title: row.title,
-              image: row.image,
-              show: row.show,
-              status: row.status,
-              tags: row.tags,
-            ))
-        .toList();
+    final pattern = '%$query%';
+    final List<Task> rows = await (select(tasks)
+          ..where((tbl) =>
+              tbl.title.like(pattern) |
+              tbl.description.like(pattern) |
+              tbl.category.like(pattern) |
+              tbl.tags.like(pattern)))
+        .get();
+    return rows.map(_rowToModel).toList();
+  }
+
+  /// Get all tasks with reminders set (for scheduling notifications)
+  Future<List<TaskModel>> getTasksWithReminders() async {
+    final List<Task> rows = await (select(tasks)
+          ..where((tbl) =>
+              tbl.reminderMinutesBefore.isBiggerOrEqualValue(0) &
+              tbl.status.equals('unComplete')))
+        .get();
+    return rows.map(_rowToModel).toList();
   }
 }
 

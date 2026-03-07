@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:todo/view/home/components/task_filter_bar.dart';
 import 'package:todo/view/home/components/today_button.dart';
 import 'package:todo/view_model/controller/home_controller.dart';
 import '../../../res/constants.dart';
@@ -45,8 +46,10 @@ class ChangeButtonRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: defaultPadding / 2),
-          // Today
-          const TodayButton(),
+          // Today (highlighted when not on current week)
+          Obx(() => controller.weekOffset.value != 0
+              ? const TodayButton()
+              : Opacity(opacity: 0.5, child: TodayButton())),
           const SizedBox(width: defaultPadding / 2),
           // Calendar
           InkWell(
@@ -63,6 +66,9 @@ class ChangeButtonRow extends StatelessWidget {
               child: Icon(Icons.calendar_month, color: scheme.onSurfaceVariant, size: 20),
             ),
           ),
+          const SizedBox(width: defaultPadding / 2),
+          // Filter
+          TaskFilterButton(),
           const SizedBox(width: defaultPadding / 2),
           // Next day
           InkWell(

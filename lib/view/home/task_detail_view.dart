@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:todo/db_helper/db_helper.dart';
 import 'package:todo/model/task_model.dart';
+import 'package:todo/util/recurrence.dart';
 import 'package:todo/util/utils.dart';
+import 'package:todo/view_model/services/notification_service.dart';
 import '../../view_model/controller/home_controller.dart';
 
 class TaskDetailView extends StatefulWidget {
@@ -30,9 +32,21 @@ class _TaskDetailViewState extends State<TaskDetailView> {
   late String _selectedDate;
   late String _startTime;
   late String _endTime;
+  late String _recurrence;
+  late int _reminderMinutesBefore;
+  late List<String> _selectedTags;
 
   bool _saving = false;
   bool _hasChanges = false;
+
+  static const _reminderOptions = <int, String>{
+    -1: 'None',
+    0: 'At time',
+    5: '5 min before',
+    15: '15 min before',
+    30: '30 min before',
+    60: '1 hour before',
+  };
 
   @override
   void initState() {
@@ -44,6 +58,9 @@ class _TaskDetailViewState extends State<TaskDetailView> {
     _selectedDate = widget.task.date ?? '';
     _startTime = widget.task.startTime ?? '';
     _endTime = widget.task.endTime ?? '';
+    _recurrence = widget.task.recurrence ?? 'none';
+    _reminderMinutesBefore = widget.task.reminderMinutesBefore ?? -1;
+    _selectedTags = List<String>.from(widget.task.tagList);
 
     _titleController.addListener(_onChanged);
     _descriptionController.addListener(_onChanged);
@@ -84,11 +101,20 @@ class _TaskDetailViewState extends State<TaskDetailView> {
       date: _selectedDate,
       startTime: _startTime,
       endTime: _endTime,
+      recurrence: _recurrence,
+      reminderMinutesBefore: _reminderMinutesBefore,
+      tags: _selectedTags.join(','),
     );
 
     await _db.insert(updatedTask); // insertOnConflictUpdate handles updates
+    // Reschedule reminder
+    await NotificationService.instance.cancelTaskReminder(updatedTask.key!);
+    if (updatedTask.hasReminder) {
+      await NotificationService.instance.scheduleTaskReminder(updatedTask);
+    }
     _homeController.getTasks(); // Refresh the task list
 
+    if (!mounted) return;
     setState(() => _saving = false);
 
     Get.back();
@@ -96,8 +122,6 @@ class _TaskDetailViewState extends State<TaskDetailView> {
       'Saved',
       'Task updated successfully',
       snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-      colorText: Theme.of(context).colorScheme.onPrimaryContainer,
     );
   }
 
@@ -111,7 +135,8 @@ class _TaskDetailViewState extends State<TaskDetailView> {
     );
 
     if (confirmed == true) {
-      await _db.delete(widget.task.key!, 'Tasks');
+      await _db.deleteTask(widget.task.key!);
+      NotificationService.instance.cancelTaskReminder(widget.task.key!);
       _homeController.getTasks();
       Get.back();
     }
@@ -263,6 +288,12 @@ class _TaskDetailViewState extends State<TaskDetailView> {
             ),
             const SizedBox(height: 20),
 
+            // Tags
+            _buildLabel('Tags'),
+            const SizedBox(height: 8),
+            _buildTagsEditor(scheme),
+            const SizedBox(height: 20),
+
             // Priority
             _buildLabel('Priority'),
             const SizedBox(height: 8),
@@ -330,6 +361,85 @@ class _TaskDetailViewState extends State<TaskDetailView> {
             ),
             const SizedBox(height: 20),
 
+            // Recurrence & Reminder
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildLabel('Repeat'),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: scheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: _recurrence,
+                            isExpanded: true,
+                            icon: Icon(Icons.repeat, size: 16, color: scheme.primary),
+                            items: const [
+                              DropdownMenuItem(value: 'none', child: Text('None')),
+                              DropdownMenuItem(value: 'daily', child: Text('Daily')),
+                              DropdownMenuItem(value: 'weekly', child: Text('Weekly')),
+                              DropdownMenuItem(value: 'monthly', child: Text('Monthly')),
+                            ],
+                            onChanged: (v) {
+                              if (v != null) {
+                                setState(() {
+                                  _recurrence = v;
+                                  _hasChanges = true;
+                                });
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildLabel('Reminder'),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: scheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<int>(
+                            value: _reminderMinutesBefore,
+                            isExpanded: true,
+                            icon: Icon(Icons.notifications_none, size: 16, color: scheme.primary),
+                            items: _reminderOptions.entries
+                                .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
+                                .toList(),
+                            onChanged: (v) {
+                              if (v != null) {
+                                setState(() {
+                                  _reminderMinutesBefore = v;
+                                  _hasChanges = true;
+                                });
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
             // Status
             _buildLabel('Status'),
             const SizedBox(height: 8),
@@ -340,7 +450,7 @@ class _TaskDetailViewState extends State<TaskDetailView> {
                   selected: widget.task.status != 'complete',
                   onSelected: (selected) async {
                     if (selected && widget.task.status == 'complete') {
-                      await _db.update(widget.task.key!, 'status', 'unComplete');
+                      await _db.updateTaskStatus(widget.task.key!, 'unComplete');
                       _homeController.getTasks();
                       setState(() {});
                     }
@@ -353,7 +463,17 @@ class _TaskDetailViewState extends State<TaskDetailView> {
                   selectedColor: scheme.primary.withValues(alpha: 0.2),
                   onSelected: (selected) async {
                     if (selected && widget.task.status != 'complete') {
-                      await _db.update(widget.task.key!, 'status', 'complete');
+                      await _db.updateTaskStatus(widget.task.key!, 'complete');
+                      // Handle recurring task
+                      if (widget.task.isRecurring) {
+                        final nextTask = RecurrenceHelper.createNextOccurrence(widget.task);
+                        if (nextTask != null) {
+                          await _db.insert(nextTask);
+                          if (nextTask.hasReminder) {
+                            NotificationService.instance.scheduleTaskReminder(nextTask);
+                          }
+                        }
+                      }
                       _homeController.getTasks();
                       setState(() {});
                     }
@@ -405,6 +525,45 @@ class _TaskDetailViewState extends State<TaskDetailView> {
             fontWeight: FontWeight.bold,
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
+    );
+  }
+
+  Widget _buildTagsEditor(ColorScheme scheme) {
+    final List<Color> palette = Utils.tagColors(context);
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: Utils.tags.asMap().entries.map((entry) {
+        final idx = entry.key;
+        final tag = entry.value;
+        final isSelected = _selectedTags.contains(tag);
+        final color = palette[idx % palette.length];
+        return FilterChip(
+          label: Text(tag),
+          selected: isSelected,
+          onSelected: (selected) {
+            setState(() {
+              if (selected) {
+                _selectedTags.add(tag);
+              } else {
+                _selectedTags.remove(tag);
+              }
+              _hasChanges = true;
+            });
+          },
+          selectedColor: color.withValues(alpha: 0.25),
+          checkmarkColor: color,
+          labelStyle: TextStyle(
+            color: isSelected ? color : scheme.onSurfaceVariant,
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+          side: BorderSide(
+            color: isSelected ? color.withValues(alpha: 0.5) : scheme.outlineVariant,
+          ),
+          visualDensity: VisualDensity.compact,
+        );
+      }).toList(),
     );
   }
 

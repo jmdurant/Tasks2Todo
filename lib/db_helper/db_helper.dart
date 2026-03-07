@@ -1,8 +1,6 @@
 import 'package:drift/drift.dart' show Value;
-import 'package:flutter/material.dart';
 import 'package:todo/data/local/database/app_database.dart';
 import 'package:todo/model/task_model.dart';
-import 'package:todo/util/utils.dart';
 
 class DbHelper {
   DbHelper._internal();
@@ -28,26 +26,12 @@ class DbHelper {
     return model;
   }
 
-  Future<int> delete(String id, String table) async {
-    final int result = await _taskDao.deleteTask(id);
-    if (result > 0) {
-      Utils.showSnackBar(
-          'Deleted',
-          'Task is removed successfully',
-          const Icon(
-            Icons.done,
-            color: Colors.white,
-            size: 16,
-          ));
-    }
-    return result;
+  Future<int> deleteTask(String id) async {
+    return _taskDao.deleteTask(id);
   }
 
-  Future<int> update(String id, String key, String value) {
-    if (key == 'status') {
-      return _taskDao.updateTaskStatus(id, value);
-    }
-    throw UnimplementedError('Update for $key is not supported.');
+  Future<int> updateTaskStatus(String id, String status) {
+    return _taskDao.updateTaskStatus(id, status);
   }
 
   Future<List<TaskModel>> getData() {
@@ -60,6 +44,10 @@ class DbHelper {
 
   Future<List<TaskModel>> getTasksForProject(String projectName) {
     return _taskDao.getTasksForProject(projectName);
+  }
+
+  Future<Map<String, List<TaskModel>>> getAllTasksGroupedByProject() {
+    return _taskDao.getAllTasksGroupedByProject();
   }
 
   Future<int> countTasksForProject(String projectName) {
@@ -97,6 +85,8 @@ class DbHelper {
   Future<List<TaskModel>> searchTasks(String query) {
     return _taskDao.searchTasks(query);
   }
+
+  Future<List<TaskModel>> getTasksWithReminders() {
+    return _taskDao.getTasksWithReminders();
+  }
 }
-
-

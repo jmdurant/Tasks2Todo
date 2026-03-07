@@ -75,6 +75,22 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
       type: DriftSqlType.string,
       requiredDuringInsert: false,
       defaultValue: const Constant(''));
+  static const VerificationMeta _recurrenceMeta =
+      const VerificationMeta('recurrence');
+  @override
+  late final GeneratedColumn<String> recurrence = GeneratedColumn<String>(
+      'recurrence', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('none'));
+  static const VerificationMeta _reminderMinutesBeforeMeta =
+      const VerificationMeta('reminderMinutesBefore');
+  @override
+  late final GeneratedColumn<int> reminderMinutesBefore = GeneratedColumn<int>(
+      'reminder_minutes_before', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(-1));
   @override
   List<GeneratedColumn> get $columns => [
         key,
@@ -88,7 +104,9 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
         date,
         show,
         status,
-        tags
+        tags,
+        recurrence,
+        reminderMinutesBefore
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -172,6 +190,18 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
       context.handle(
           _tagsMeta, tags.isAcceptableOrUnknown(data['tags']!, _tagsMeta));
     }
+    if (data.containsKey('recurrence')) {
+      context.handle(
+          _recurrenceMeta,
+          recurrence.isAcceptableOrUnknown(
+              data['recurrence']!, _recurrenceMeta));
+    }
+    if (data.containsKey('reminder_minutes_before')) {
+      context.handle(
+          _reminderMinutesBeforeMeta,
+          reminderMinutesBefore.isAcceptableOrUnknown(
+              data['reminder_minutes_before']!, _reminderMinutesBeforeMeta));
+    }
     return context;
   }
 
@@ -205,6 +235,10 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
           .read(DriftSqlType.string, data['${effectivePrefix}status'])!,
       tags: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}tags'])!,
+      recurrence: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}recurrence'])!,
+      reminderMinutesBefore: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}reminder_minutes_before'])!,
     );
   }
 
@@ -227,6 +261,8 @@ class Task extends DataClass implements Insertable<Task> {
   final String show;
   final String status;
   final String tags;
+  final String recurrence;
+  final int reminderMinutesBefore;
   const Task(
       {required this.key,
       required this.title,
@@ -239,7 +275,9 @@ class Task extends DataClass implements Insertable<Task> {
       required this.date,
       required this.show,
       required this.status,
-      required this.tags});
+      required this.tags,
+      required this.recurrence,
+      required this.reminderMinutesBefore});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -255,6 +293,8 @@ class Task extends DataClass implements Insertable<Task> {
     map['show'] = Variable<String>(show);
     map['status'] = Variable<String>(status);
     map['tags'] = Variable<String>(tags);
+    map['recurrence'] = Variable<String>(recurrence);
+    map['reminder_minutes_before'] = Variable<int>(reminderMinutesBefore);
     return map;
   }
 
@@ -272,6 +312,8 @@ class Task extends DataClass implements Insertable<Task> {
       show: Value(show),
       status: Value(status),
       tags: Value(tags),
+      recurrence: Value(recurrence),
+      reminderMinutesBefore: Value(reminderMinutesBefore),
     );
   }
 
@@ -291,6 +333,9 @@ class Task extends DataClass implements Insertable<Task> {
       show: serializer.fromJson<String>(json['show']),
       status: serializer.fromJson<String>(json['status']),
       tags: serializer.fromJson<String>(json['tags']),
+      recurrence: serializer.fromJson<String>(json['recurrence']),
+      reminderMinutesBefore:
+          serializer.fromJson<int>(json['reminderMinutesBefore']),
     );
   }
   @override
@@ -309,6 +354,8 @@ class Task extends DataClass implements Insertable<Task> {
       'show': serializer.toJson<String>(show),
       'status': serializer.toJson<String>(status),
       'tags': serializer.toJson<String>(tags),
+      'recurrence': serializer.toJson<String>(recurrence),
+      'reminderMinutesBefore': serializer.toJson<int>(reminderMinutesBefore),
     };
   }
 
@@ -324,7 +371,9 @@ class Task extends DataClass implements Insertable<Task> {
           String? date,
           String? show,
           String? status,
-          String? tags}) =>
+          String? tags,
+          String? recurrence,
+          int? reminderMinutesBefore}) =>
       Task(
         key: key ?? this.key,
         title: title ?? this.title,
@@ -338,6 +387,9 @@ class Task extends DataClass implements Insertable<Task> {
         show: show ?? this.show,
         status: status ?? this.status,
         tags: tags ?? this.tags,
+        recurrence: recurrence ?? this.recurrence,
+        reminderMinutesBefore:
+            reminderMinutesBefore ?? this.reminderMinutesBefore,
       );
   Task copyWithCompanion(TasksCompanion data) {
     return Task(
@@ -354,6 +406,11 @@ class Task extends DataClass implements Insertable<Task> {
       show: data.show.present ? data.show.value : this.show,
       status: data.status.present ? data.status.value : this.status,
       tags: data.tags.present ? data.tags.value : this.tags,
+      recurrence:
+          data.recurrence.present ? data.recurrence.value : this.recurrence,
+      reminderMinutesBefore: data.reminderMinutesBefore.present
+          ? data.reminderMinutesBefore.value
+          : this.reminderMinutesBefore,
     );
   }
 
@@ -371,14 +428,29 @@ class Task extends DataClass implements Insertable<Task> {
           ..write('date: $date, ')
           ..write('show: $show, ')
           ..write('status: $status, ')
-          ..write('tags: $tags')
+          ..write('tags: $tags, ')
+          ..write('recurrence: $recurrence, ')
+          ..write('reminderMinutesBefore: $reminderMinutesBefore')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(key, title, category, description, image,
-      periority, startTime, endTime, date, show, status, tags);
+  int get hashCode => Object.hash(
+      key,
+      title,
+      category,
+      description,
+      image,
+      periority,
+      startTime,
+      endTime,
+      date,
+      show,
+      status,
+      tags,
+      recurrence,
+      reminderMinutesBefore);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -394,7 +466,9 @@ class Task extends DataClass implements Insertable<Task> {
           other.date == this.date &&
           other.show == this.show &&
           other.status == this.status &&
-          other.tags == this.tags);
+          other.tags == this.tags &&
+          other.recurrence == this.recurrence &&
+          other.reminderMinutesBefore == this.reminderMinutesBefore);
 }
 
 class TasksCompanion extends UpdateCompanion<Task> {
@@ -410,6 +484,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
   final Value<String> show;
   final Value<String> status;
   final Value<String> tags;
+  final Value<String> recurrence;
+  final Value<int> reminderMinutesBefore;
   final Value<int> rowid;
   const TasksCompanion({
     this.key = const Value.absent(),
@@ -424,6 +500,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
     this.show = const Value.absent(),
     this.status = const Value.absent(),
     this.tags = const Value.absent(),
+    this.recurrence = const Value.absent(),
+    this.reminderMinutesBefore = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   TasksCompanion.insert({
@@ -439,6 +517,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
     required String show,
     required String status,
     this.tags = const Value.absent(),
+    this.recurrence = const Value.absent(),
+    this.reminderMinutesBefore = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : key = Value(key),
         title = Value(title),
@@ -464,6 +544,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
     Expression<String>? show,
     Expression<String>? status,
     Expression<String>? tags,
+    Expression<String>? recurrence,
+    Expression<int>? reminderMinutesBefore,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -479,6 +561,9 @@ class TasksCompanion extends UpdateCompanion<Task> {
       if (show != null) 'show': show,
       if (status != null) 'status': status,
       if (tags != null) 'tags': tags,
+      if (recurrence != null) 'recurrence': recurrence,
+      if (reminderMinutesBefore != null)
+        'reminder_minutes_before': reminderMinutesBefore,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -496,6 +581,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
       Value<String>? show,
       Value<String>? status,
       Value<String>? tags,
+      Value<String>? recurrence,
+      Value<int>? reminderMinutesBefore,
       Value<int>? rowid}) {
     return TasksCompanion(
       key: key ?? this.key,
@@ -510,6 +597,9 @@ class TasksCompanion extends UpdateCompanion<Task> {
       show: show ?? this.show,
       status: status ?? this.status,
       tags: tags ?? this.tags,
+      recurrence: recurrence ?? this.recurrence,
+      reminderMinutesBefore:
+          reminderMinutesBefore ?? this.reminderMinutesBefore,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -553,6 +643,13 @@ class TasksCompanion extends UpdateCompanion<Task> {
     if (tags.present) {
       map['tags'] = Variable<String>(tags.value);
     }
+    if (recurrence.present) {
+      map['recurrence'] = Variable<String>(recurrence.value);
+    }
+    if (reminderMinutesBefore.present) {
+      map['reminder_minutes_before'] =
+          Variable<int>(reminderMinutesBefore.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -574,6 +671,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
           ..write('show: $show, ')
           ..write('status: $status, ')
           ..write('tags: $tags, ')
+          ..write('recurrence: $recurrence, ')
+          ..write('reminderMinutesBefore: $reminderMinutesBefore, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1946,6 +2045,8 @@ typedef $$TasksTableCreateCompanionBuilder = TasksCompanion Function({
   required String show,
   required String status,
   Value<String> tags,
+  Value<String> recurrence,
+  Value<int> reminderMinutesBefore,
   Value<int> rowid,
 });
 typedef $$TasksTableUpdateCompanionBuilder = TasksCompanion Function({
@@ -1961,6 +2062,8 @@ typedef $$TasksTableUpdateCompanionBuilder = TasksCompanion Function({
   Value<String> show,
   Value<String> status,
   Value<String> tags,
+  Value<String> recurrence,
+  Value<int> reminderMinutesBefore,
   Value<int> rowid,
 });
 
@@ -2007,6 +2110,13 @@ class $$TasksTableFilterComposer extends Composer<_$AppDatabase, $TasksTable> {
 
   ColumnFilters<String> get tags => $composableBuilder(
       column: $table.tags, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get recurrence => $composableBuilder(
+      column: $table.recurrence, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get reminderMinutesBefore => $composableBuilder(
+      column: $table.reminderMinutesBefore,
+      builder: (column) => ColumnFilters(column));
 }
 
 class $$TasksTableOrderingComposer
@@ -2053,6 +2163,13 @@ class $$TasksTableOrderingComposer
 
   ColumnOrderings<String> get tags => $composableBuilder(
       column: $table.tags, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get recurrence => $composableBuilder(
+      column: $table.recurrence, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get reminderMinutesBefore => $composableBuilder(
+      column: $table.reminderMinutesBefore,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$TasksTableAnnotationComposer
@@ -2099,6 +2216,12 @@ class $$TasksTableAnnotationComposer
 
   GeneratedColumn<String> get tags =>
       $composableBuilder(column: $table.tags, builder: (column) => column);
+
+  GeneratedColumn<String> get recurrence => $composableBuilder(
+      column: $table.recurrence, builder: (column) => column);
+
+  GeneratedColumn<int> get reminderMinutesBefore => $composableBuilder(
+      column: $table.reminderMinutesBefore, builder: (column) => column);
 }
 
 class $$TasksTableTableManager extends RootTableManager<
@@ -2136,6 +2259,8 @@ class $$TasksTableTableManager extends RootTableManager<
             Value<String> show = const Value.absent(),
             Value<String> status = const Value.absent(),
             Value<String> tags = const Value.absent(),
+            Value<String> recurrence = const Value.absent(),
+            Value<int> reminderMinutesBefore = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               TasksCompanion(
@@ -2151,6 +2276,8 @@ class $$TasksTableTableManager extends RootTableManager<
             show: show,
             status: status,
             tags: tags,
+            recurrence: recurrence,
+            reminderMinutesBefore: reminderMinutesBefore,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -2166,6 +2293,8 @@ class $$TasksTableTableManager extends RootTableManager<
             required String show,
             required String status,
             Value<String> tags = const Value.absent(),
+            Value<String> recurrence = const Value.absent(),
+            Value<int> reminderMinutesBefore = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               TasksCompanion.insert(
@@ -2181,6 +2310,8 @@ class $$TasksTableTableManager extends RootTableManager<
             show: show,
             status: status,
             tags: tags,
+            recurrence: recurrence,
+            reminderMinutesBefore: reminderMinutesBefore,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0

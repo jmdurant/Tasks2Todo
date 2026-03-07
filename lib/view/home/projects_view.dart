@@ -35,15 +35,13 @@ class _ProjectsViewState extends State<ProjectsView> {
   Future<void> _loadAllProjectTasks() async {
     setState(() => _isLoading = true);
 
-    // Load Inbox tasks
-    final inboxTasks = await _db.getTasksForProject('Inbox');
-    _tasksByProject['Inbox'] = inboxTasks;
-
-    // Load tasks for each project
-    for (final project in controller.projects) {
-      final tasks = await _db.getTasksForProject(project.name);
-      _tasksByProject[project.name] = tasks;
-    }
+    // Single query to load all tasks, grouped by project
+    final grouped = await _db.getAllTasksGroupedByProject();
+    _tasksByProject
+      ..clear()
+      ..addAll(grouped);
+    // Ensure Inbox always exists even if empty
+    _tasksByProject.putIfAbsent('Inbox', () => []);
 
     setState(() => _isLoading = false);
   }
@@ -54,19 +52,19 @@ class _ProjectsViewState extends State<ProjectsView> {
     final oldProject = task.category ?? 'Inbox';
 
     // Update in database
-    await _db.update(task.key!, 'category', newProjectName);
+    // Re-insert with updated category (insertOnConflictUpdate handles it)
+    await _db.insert(task.copyWith(category: newProjectName));
 
-    // Update local cache
+    // Update local cache with immutable copy
+    final movedTask = task.copyWith(category: newProjectName);
     setState(() {
       _tasksByProject[oldProject]?.removeWhere((t) => t.key == task.key);
-      task.category = newProjectName;
       _tasksByProject[newProjectName] ??= [];
-      _tasksByProject[newProjectName]!.add(task);
+      _tasksByProject[newProjectName]!.add(movedTask);
     });
 
     // Refresh home controller
     controller.getTasks();
-    controller.loadTaskCountsByProject();
 
     Utils.showSnackBar(
       'Moved',
@@ -437,12 +435,10 @@ class _ProjectsViewState extends State<ProjectsView> {
 
   Future<void> _toggleTaskComplete(TaskModel task) async {
     final newStatus = task.status == 'complete' ? 'unComplete' : 'complete';
-    await _db.update(task.key!, 'status', newStatus);
+    await _db.updateTaskStatus(task.key!, newStatus);
 
-    setState(() {
-      task.status = newStatus;
-    });
-
+    // Reload from DB to get fresh immutable state
+    await _loadAllProjectTasks();
     controller.getTasks();
   }
 
@@ -600,14 +596,13 @@ class _ProjectsViewState extends State<ProjectsView> {
                     description: description,
                     color: palette[selectedColor],
                   );
+                  if (!ctx.mounted) return;
                   Navigator.of(ctx).pop();
                   _loadAllProjectTasks(); // Refresh task lists
                   Get.snackbar(
                     'Project added',
                     '"$name" is ready for tasks.',
                     snackPosition: SnackPosition.BOTTOM,
-                    backgroundColor: scheme.primaryContainer,
-                    colorText: scheme.onPrimaryContainer,
                   );
                 },
                 child: const Text('Create'),

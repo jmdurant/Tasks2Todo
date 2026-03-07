@@ -122,8 +122,8 @@ class TaskParser {
       content = content.replaceAll(dateMatch.group(0)!, '').trim();
     }
 
-    // Extract time (~ time)
-    final timePattern = RegExp(r'~\s*([^\s@^>:#]+)');
+    // Extract time (~ time) — allow colons in the time value
+    final timePattern = RegExp(r'~\s*(\d{1,2}(?::\d{2})?\s*(?:am|pm)?|\d{1,2}:\d{2})', caseSensitive: false);
     final timeMatch = timePattern.firstMatch(content);
     if (timeMatch != null) {
       time = _parseTime(timeMatch.group(1)!);
@@ -195,12 +195,12 @@ class TaskParser {
     }
 
     // Handle day names (Mon, Tue, etc.)
+    // DateTime.weekday: Monday=1, Tuesday=2, ..., Sunday=7
     final dayNames = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
     final dayIndex = dayNames.indexWhere((d) => dateStr.startsWith(d));
     if (dayIndex != -1) {
-      final targetDay = (dayIndex + 1) % 7; // Convert to DateTime weekday
-      final currentDay = now.weekday % 7;
-      var daysToAdd = targetDay - currentDay;
+      final targetDay = dayIndex + 1; // 1=Mon, 2=Tue, ..., 7=Sun
+      var daysToAdd = targetDay - now.weekday;
       if (daysToAdd <= 0) daysToAdd += 7;
       return DateFormat('dd/MM/yyyy')
           .format(now.add(Duration(days: daysToAdd)));
@@ -250,9 +250,9 @@ class TaskParser {
         if (period == 'am' && hour == 12) hour = 0;
       }
 
-      final hourStr = hour > 12 ? hour - 12 : hour;
       final periodStr = hour >= 12 ? 'PM' : 'AM';
-      return '${hourStr.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:$periodStr';
+      final displayHour = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+      return '${displayHour.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:$periodStr';
     }
 
     // Default to current time
@@ -263,6 +263,7 @@ class TaskParser {
   }
 
   static List<TaskModel> convertToTaskModels(List<ParsedTask> parsedTasks) {
+    int keyBase = DateTime.now().microsecondsSinceEpoch;
     return parsedTasks.map((parsed) {
       final now = DateTime.now();
       final description = [
@@ -272,7 +273,7 @@ class TaskParser {
       ].join('\n');
 
       return TaskModel(
-        key: now.microsecondsSinceEpoch.toString(),
+        key: (keyBase++).toString(),
         title: parsed.title,
         category: parsed.project ?? 'Inbox',
         description: description.isEmpty ? '' : description,

@@ -118,8 +118,6 @@ class _QuickEntryViewState extends State<QuickEntryView> {
     });
 
     try {
-      final drawing =
-          lastDrawing ?? PencilDrawing.from(pencilDrawing: pencilController.drawing);
       final image = pencilController.drawingAsImage(
         backgroundColor: scheme.surface,
       );
@@ -321,7 +319,7 @@ class _QuickEntryViewState extends State<QuickEntryView> {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: Container(
-                color: scheme.surfaceVariant,
+                color: scheme.surfaceContainerHighest,
                 child: PencilField(
                   controller: pencilController,
                   pencilPaint: PencilPaint(

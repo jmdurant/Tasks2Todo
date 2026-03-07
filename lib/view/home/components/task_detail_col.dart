@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:todo/model/task_model.dart';
 import '../../../util/utils.dart';
 import '../../../view_model/controller/home_controller.dart';
 
 class TaskTitle extends StatelessWidget {
-  const TaskTitle({super.key, required this.index, required this.ind});
+  const TaskTitle({super.key, required this.index, required this.ind, this.task});
   final int index;
   final int ind;
+  final TaskModel? task;
 
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<HomeController>();
-    final task = controller.list[ind][index];
+    final task = this.task ?? controller.list[ind][index];
     final TextTheme textTheme = Theme.of(context).textTheme;
     final ColorScheme scheme = Theme.of(context).colorScheme;
     final List<Color> palette = Utils.tagColors(context);
@@ -32,12 +34,25 @@ class TaskTitle extends StatelessWidget {
               ) ??
               const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
-        if (task.startTime?.isNotEmpty == true || task.endTime?.isNotEmpty == true)
-          Text(
-            '${task.startTime ?? ''} ${task.startTime?.isNotEmpty == true && task.endTime?.isNotEmpty == true ? '-' : ''} ${task.endTime ?? ''}'.trim(),
-            style: textTheme.bodySmall?.copyWith(
-                  color: scheme.onSurfaceVariant,
+        if (task.startTime?.isNotEmpty == true || task.endTime?.isNotEmpty == true || task.isRecurring || task.hasReminder)
+          Row(
+            children: [
+              if (task.startTime?.isNotEmpty == true || task.endTime?.isNotEmpty == true)
+                Text(
+                  '${task.startTime ?? ''} ${task.startTime?.isNotEmpty == true && task.endTime?.isNotEmpty == true ? '-' : ''} ${task.endTime ?? ''}'.trim(),
+                  style: textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
                 ),
+              if (task.isRecurring) ...[
+                const SizedBox(width: 6),
+                Icon(Icons.repeat, size: 14, color: scheme.primary.withValues(alpha: 0.7)),
+              ],
+              if (task.hasReminder) ...[
+                const SizedBox(width: 4),
+                Icon(Icons.notifications_none, size: 14, color: scheme.tertiary.withValues(alpha: 0.7)),
+              ],
+            ],
           ),
         if (taskTags.isNotEmpty) ...[
           const SizedBox(height: 8),

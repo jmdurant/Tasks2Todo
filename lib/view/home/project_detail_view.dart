@@ -3,7 +3,8 @@ import 'package:get/get.dart';
 import 'package:todo/data/local/database/app_database.dart';
 import 'package:todo/db_helper/db_helper.dart';
 import 'package:todo/model/task_model.dart';
-import 'package:todo/util/utils.dart';
+import 'package:todo/util/recurrence.dart';
+import 'package:todo/view_model/services/notification_service.dart';
 import '../../view_model/controller/home_controller.dart';
 
 class ProjectDetailView extends StatefulWidget {
@@ -44,14 +45,57 @@ class _ProjectDetailViewState extends State<ProjectDetailView> {
   }
 
   Future<void> _deleteTask(TaskModel task) async {
-    await _db.delete(task.key!, 'Tasks');
+    await _db.deleteTask(task.key!);
+    NotificationService.instance.cancelTaskReminder(task.key!);
     _loadTasks();
-    _homeController.getTasks(); // Refresh home view
+    _homeController.getTasks();
+
+    if (!mounted) return;
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    Get.showSnackbar(
+      GetSnackBar(
+        backgroundColor: scheme.inverseSurface,
+        duration: const Duration(seconds: 4),
+        snackPosition: SnackPosition.BOTTOM,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        titleText: Text(
+          'Task deleted',
+          style: TextStyle(color: scheme.onInverseSurface, fontWeight: FontWeight.bold),
+        ),
+        messageText: Text(
+          '"${task.title}" was removed',
+          style: TextStyle(color: scheme.onInverseSurface),
+          overflow: TextOverflow.ellipsis,
+        ),
+        mainButton: TextButton(
+          onPressed: () {
+            Get.closeCurrentSnackbar();
+            _db.insert(task);
+            _loadTasks();
+            _homeController.getTasks();
+          },
+          child: Text(
+            'UNDO',
+            style: TextStyle(color: scheme.inversePrimary, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _toggleComplete(TaskModel task) async {
     final newStatus = task.status == 'complete' ? 'unComplete' : 'complete';
-    await _db.update(task.key!, 'status', newStatus);
+    await _db.updateTaskStatus(task.key!, newStatus);
+    // Handle recurring tasks
+    if (newStatus == 'complete' && task.isRecurring) {
+      final nextTask = RecurrenceHelper.createNextOccurrence(task);
+      if (nextTask != null) {
+        await _db.insert(nextTask);
+        if (nextTask.hasReminder) {
+          NotificationService.instance.scheduleTaskReminder(nextTask);
+        }
+      }
+    }
     _loadTasks();
     _homeController.getTasks();
   }
@@ -173,8 +217,31 @@ class _ProjectDetailViewState extends State<ProjectDetailView> {
 
     return Dismissible(
       key: ValueKey(task.key),
-      direction: DismissDirection.endToStart,
+      // Swipe right to complete, left to delete
+      confirmDismiss: (direction) async {
+        if (direction == DismissDirection.startToEnd) {
+          _toggleComplete(task);
+          return false;
+        }
+        return true;
+      },
+      onDismissed: (direction) => _deleteTask(task),
+      // Right swipe: complete
       background: Container(
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.only(left: 20),
+        margin: const EdgeInsets.only(bottom: 8),
+        decoration: BoxDecoration(
+          color: isComplete ? scheme.tertiary : scheme.primary,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(
+          isComplete ? Icons.undo : Icons.check_circle,
+          color: isComplete ? scheme.onTertiary : scheme.onPrimary,
+        ),
+      ),
+      // Left swipe: delete
+      secondaryBackground: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
         margin: const EdgeInsets.only(bottom: 8),
@@ -184,16 +251,6 @@ class _ProjectDetailViewState extends State<ProjectDetailView> {
         ),
         child: Icon(Icons.delete, color: scheme.onError),
       ),
-      confirmDismiss: (direction) async {
-        return await Utils.showWarningDialog(
-          context,
-          'Delete Task',
-          'Are you sure you want to delete "${task.title}"?',
-          'Delete',
-          () {},
-        );
-      },
-      onDismissed: (direction) => _deleteTask(task),
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         decoration: BoxDecoration(
@@ -230,12 +287,24 @@ class _ProjectDetailViewState extends State<ProjectDetailView> {
             ),
           ),
           subtitle: task.date != null
-              ? Text(
-                  '${task.date} ${task.startTime ?? ''}',
-                  style: TextStyle(
-                    color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
-                    fontSize: 12,
-                  ),
+              ? Row(
+                  children: [
+                    Text(
+                      '${task.date} ${task.startTime ?? ''}',
+                      style: TextStyle(
+                        color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
+                        fontSize: 12,
+                      ),
+                    ),
+                    if (task.isRecurring) ...[
+                      const SizedBox(width: 6),
+                      Icon(Icons.repeat, size: 14, color: scheme.primary.withValues(alpha: 0.7)),
+                    ],
+                    if (task.hasReminder) ...[
+                      const SizedBox(width: 4),
+                      Icon(Icons.notifications_none, size: 14, color: scheme.tertiary.withValues(alpha: 0.7)),
+                    ],
+                  ],
                 )
               : null,
           trailing: _buildPriorityChip(context, task.periority),

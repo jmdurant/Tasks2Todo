@@ -18,6 +18,7 @@ class Dates extends StatelessWidget {
       final date = DateTime.now().add(Duration(days: index + controller.weekOffset.value * 7));
       final bool isSelected = controller.currentIndex.value == index;
       final Color textColor = isSelected ? scheme.onPrimary : scheme.onSurface;
+      final int taskCount = controller.list[index].length;
 
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -48,6 +49,18 @@ class Dates extends StatelessWidget {
               fontSize: 13,
             ),
           ),
+          if (taskCount > 0)
+            Container(
+              margin: const EdgeInsets.only(top: 4),
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isSelected
+                    ? scheme.onPrimary
+                    : scheme.primary,
+              ),
+            ),
         ],
       );
     });

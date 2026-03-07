@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:todo/data/local/local_auth_service.dart';
+import 'package:todo/view/home/calendar_view.dart';
 import 'package:todo/view_model/controller/home_controller.dart';
 import '../../../view_model/responsive.dart';
 import 'search_dialog.dart';
+import '../stats_view.dart';
 
 class CustomAppBar extends StatelessWidget {
   CustomAppBar({super.key});
@@ -152,6 +154,36 @@ class CustomAppBar extends StatelessWidget {
             ],
           ),
           const Spacer(flex: 10),
+          // Stats button
+          InkWell(
+            onTap: () => Get.to(() => const StatsView()),
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              height: 50,
+              width: 50,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                color: scheme.surfaceContainerHighest,
+              ),
+              child: Icon(Icons.bar_chart, color: scheme.onSurface),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Monthly calendar button
+          InkWell(
+            onTap: () => Get.to(() => const _MonthlyCalendarPage()),
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              height: 50,
+              width: 50,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                color: scheme.surfaceContainerHighest,
+              ),
+              child: Icon(Icons.calendar_month, color: scheme.onSurface),
+            ),
+          ),
+          const SizedBox(width: 12),
           // Search button
           InkWell(
             onTap: () => _showSearch(context),
@@ -191,6 +223,35 @@ class CustomAppBar extends StatelessWidget {
           if (Responsive.isTablet(context)) const Spacer(),
         ],
       ),
+    );
+  }
+}
+
+class _MonthlyCalendarPage extends StatelessWidget {
+  const _MonthlyCalendarPage();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Scaffold(
+      backgroundColor: scheme.surface,
+      appBar: AppBar(
+        backgroundColor: scheme.surface,
+        surfaceTintColor: Colors.transparent,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: scheme.onSurface),
+          onPressed: () => Get.back(),
+        ),
+        title: Text(
+          'Monthly Calendar',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: scheme.onSurface,
+              ),
+        ),
+        centerTitle: true,
+      ),
+      body: const SafeArea(child: CalendarView()),
     );
   }
 }

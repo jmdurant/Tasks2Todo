@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:todo/view/new_task/components/tags_input.dart';
 import 'package:todo/view/new_task/components/task_button.dart';
 import 'package:todo/view_model/controller/new_task_controller.dart';
 import 'package:todo/view_model/responsive.dart';
@@ -21,7 +22,7 @@ class NewTask extends StatelessWidget {
           topLeft: Radius.circular(30),
           topRight: Radius.circular(30)),
       child: Container(
-          height: 550,
+          height: 650,
           width: Responsive.isLargeTablet(context)
               ? MediaQuery.sizeOf(context).width / 2.5
               : Responsive.isTablet(context)
@@ -50,6 +51,7 @@ class NewTask extends StatelessWidget {
                       LabelInput(),
                       CategoryInput(),
                       DescriptionInput(),
+                      TagsInput(),
                       DateTimeInput(),
                     ],
                   ),

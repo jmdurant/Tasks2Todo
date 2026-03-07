@@ -15,7 +15,7 @@ class PeriorityContainer extends StatelessWidget {
       padding: EdgeInsets.all(selected ? 3 : 0),
       decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(30),
-          color: selected ? scheme.primary : scheme.surfaceVariant),
+          color: selected ? scheme.primary : scheme.surfaceContainerHighest),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
