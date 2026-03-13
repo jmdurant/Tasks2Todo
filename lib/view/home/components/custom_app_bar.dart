@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:todo/config/app_config.dart';
 import 'package:todo/data/local/local_auth_service.dart';
 import 'package:todo/view/home/calendar_view.dart';
 import 'package:todo/view_model/controller/home_controller.dart';
@@ -131,26 +132,38 @@ class CustomAppBar extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Hello,',
-                style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                  color: scheme.onSurface,
-                  fontWeight: FontWeight.w400,
-                  height: 0,
-                  letterSpacing: 2,
-                  fontSize: 18,
+              if (AppConfig.firebaseAvailable) ...[
+                Text(
+                  'Hello,',
+                  style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                    color: scheme.onSurface,
+                    fontWeight: FontWeight.w400,
+                    height: 0,
+                    letterSpacing: 2,
+                    fontSize: 18,
+                  ),
                 ),
-              ),
-              Obx(() => Text(
-                controller.name.value,
-                style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                  color: scheme.onSurface,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 2,
-                  height: 0,
-                  fontSize: 25,
+                Obx(() => Text(
+                  controller.name.value,
+                  style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                    color: scheme.onSurface,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 2,
+                    height: 0,
+                    fontSize: 25,
+                  ),
+                )),
+              ] else
+                Text(
+                  'My Tasks',
+                  style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                    color: scheme.onSurface,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 2,
+                    height: 0,
+                    fontSize: 25,
+                  ),
                 ),
-              )),
             ],
           ),
           const Spacer(flex: 10),
@@ -198,28 +211,30 @@ class CustomAppBar extends StatelessWidget {
               child: Icon(Icons.search, color: scheme.onSurface),
             ),
           ),
-          const SizedBox(width: 12),
-          // Profile button
-          InkWell(
-            onTap: () => _showProfilePopup(context),
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              height: 50,
-              width: 50,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                color: scheme.primary,
-                boxShadow: [
-                  BoxShadow(
-                    color: scheme.primary.withValues(alpha: 0.35),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
+          if (AppConfig.firebaseAvailable) ...[
+            const SizedBox(width: 12),
+            // Profile button
+            InkWell(
+              onTap: () => _showProfilePopup(context),
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                height: 50,
+                width: 50,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: scheme.primary,
+                  boxShadow: [
+                    BoxShadow(
+                      color: scheme.primary.withValues(alpha: 0.35),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Icon(Icons.account_circle_outlined, color: scheme.onPrimary),
               ),
-              child: Icon(Icons.account_circle_outlined, color: scheme.onPrimary),
             ),
-          ),
+          ],
           if (Responsive.isTablet(context)) const Spacer(),
         ],
       ),

@@ -15,8 +15,8 @@ class BottomNavBar extends StatelessWidget {
       inactiveColor: scheme.onSurfaceVariant,
       activeColor: scheme.primary,
       icons: const [
-        Icons.calendar_month,
         Icons.edit_note,
+        Icons.calendar_month,
         Icons.folder_open,
         Icons.settings
       ],

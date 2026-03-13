@@ -25,7 +25,9 @@ class HomePage extends StatelessWidget {
         child: Obx(() => IndexedStack(
           index: controller.barIndex.value,
           children: [
-            // Calendar View (index 0)
+            // Quick Entry View (index 0)
+            const QuickEntryView(),
+            // Calendar View (index 1)
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -35,8 +37,6 @@ class HomePage extends StatelessWidget {
                 ),
               ],
             ),
-            // Quick Entry View (index 1)
-            const QuickEntryView(),
             // Projects View (index 2)
             const ProjectsView(),
             // Settings View (index 3)
