@@ -11,7 +11,10 @@
       "Bash(flutter attach:*)",
       "Bash(taskkill:*)",
       "Bash(flutter run:*)",
-      "Bash(powershell -Command:*)"
+      "Bash(powershell -Command:*)",
+      "Bash(dart analyze:*)",
+      "Bash(flutter test:*)",
+      "Bash(dart run:*)"
     ]
   }
 }

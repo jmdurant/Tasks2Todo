@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "gplay": {
+      "command": "bash",
+      "args": ["-c", "set -a && source C:/Users/docto/Tasks2Todo/.env && exec node C:/Users/docto/gplay-mcp-server/dist/index.js"]
+    },
+    "app-store-connect": {
+      "command": "bash",
+      "args": ["-c", "set -a && source C:/Users/docto/Tasks2Todo/.env && exec node C:/Users/docto/asc-mcp-server/dist/index.js"]
+    },
+    "amazon-appstore": {
+      "command": "bash",
+      "args": ["-c", "set -a && source C:/Users/docto/Tasks2Todo/.env && exec node C:/Users/docto/amazon-mcp-server/dist/index.js"]
+    }
+  }
+}
