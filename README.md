@@ -76,6 +76,26 @@ The Drift-powered SQLite database (`paper2todo.db`) now contains three tables so
 
 Dedicated DAOs (`TaskDao`, `CaptureSessionDao`, `ParsedItemDao`) expose CRUD, sync-status helpers, and reactive streams, so merging data from other projects only requires wiring those DAOs into your controllers or sync services.
 
+## MCP Server Setup (Claude Code)
+
+This project uses MCP servers for app store management. The config file `.mcp.json` is gitignored since it contains machine-specific paths and credentials.
+
+To set up:
+
+1. Copy the example: `cp .mcp.json.example .mcp.json`
+2. Edit `.mcp.json` with your actual paths and credentials
+
+Each server needs:
+
+| Server | Env Vars | Notes |
+|---|---|---|
+| **gplay** | `GPLAY_SERVICE_ACCOUNT_KEY` | Path to GCP service account JSON key |
+| **app-store-connect** | `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_PATH` | `.p8` key from App Store Connect. Optional: `ASC_CONTACT_PHONE` |
+| **amazon-appstore** | `AMAZON_CLIENT_ID`, `AMAZON_CLIENT_SECRET` | From Amazon Developer Console Security Profile |
+| **meta-quest** | `META_QUEST_CONFIG` | Path to JSON with per-app `appId`/`appSecret`. Optional: `OVR_PLATFORM_UTIL_PATH` |
+
+See each server's README for credential setup details.
+
 ## Contributions
 
 Contributions are welcome! If you find a bug or want to add new features, feel free to open an issue or submit a pull request.

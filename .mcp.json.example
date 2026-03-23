@@ -1,0 +1,37 @@
+{
+  "mcpServers": {
+    "gplay": {
+      "command": "node",
+      "args": ["/path/to/gplay-mcp-server/dist/index.js"],
+      "env": {
+        "GPLAY_SERVICE_ACCOUNT_KEY": "/path/to/google-play-service-account.json"
+      }
+    },
+    "app-store-connect": {
+      "command": "node",
+      "args": ["/path/to/asc-mcp-server/dist/index.js"],
+      "env": {
+        "ASC_KEY_ID": "YOUR_KEY_ID",
+        "ASC_ISSUER_ID": "YOUR_ISSUER_ID",
+        "ASC_KEY_PATH": "/path/to/AuthKey_XXXXXXXX.p8",
+        "ASC_CONTACT_PHONE": "+18005551234"
+      }
+    },
+    "amazon-appstore": {
+      "command": "node",
+      "args": ["/path/to/amazon-mcp-server/dist/index.js"],
+      "env": {
+        "AMAZON_CLIENT_ID": "YOUR_CLIENT_ID",
+        "AMAZON_CLIENT_SECRET": "YOUR_CLIENT_SECRET"
+      }
+    },
+    "meta-quest": {
+      "command": "node",
+      "args": ["/path/to/meta-quest-mcp-server/dist/index.js"],
+      "env": {
+        "META_QUEST_CONFIG": "/path/to/meta-quest-config.json",
+        "OVR_PLATFORM_UTIL_PATH": "/path/to/ovr-platform-util"
+      }
+    }
+  }
+}
