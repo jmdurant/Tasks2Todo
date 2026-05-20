@@ -6,6 +6,7 @@ import 'package:share_handler/share_handler.dart';
 import 'package:todo/config/app_config.dart';
 import 'package:todo/db_helper/db_helper.dart';
 import 'package:todo/theme/app_theme.dart';
+import 'package:todo/util/paper2todo_payload.dart';
 import 'package:todo/util/task_parser.dart';
 import 'package:todo/util/utils.dart';
 import 'package:todo/view/home/home.dart';
@@ -63,13 +64,44 @@ Future<void> _processIncomingShare(SharedMedia media) async {
   final String? raw = media.content;
   if (raw == null || raw.trim().isEmpty) return;
 
+  // Phase B: paper2todo sends rich JSON with a sentinel prefix. Lands in the
+  // Inbox view for review rather than going straight to the Tasks table.
+  try {
+    final payload = Paper2TodoPayload.tryDecode(raw);
+    if (payload != null) {
+      await DbHelper().insertPaper2TodoCapture(payload);
+      // Jump the user straight to Quick Entry → Inbox so they see the new
+      // capture without manually navigating. Wrapped in try because the
+      // HomeController might not be registered yet on cold-start share.
+      try {
+        final home = Get.find<HomeController>();
+        home.barIndex.value = 0; // Quick Entry tab
+        home.quickEntryMode.value = 2; // Inbox sub-mode
+      } catch (_) {}
+      Utils.showSnackBar(
+        'Captured',
+        'Got ${payload.items.length} item${payload.items.length == 1 ? '' : 's'} from Paper2Todo',
+        const Icon(Icons.move_to_inbox, color: Colors.white),
+      );
+      return;
+    }
+  } catch (e) {
+    debugPrint('Share receiver: paper2todo payload malformed: $e');
+    Utils.showSnackBar(
+      'Paper2Todo error',
+      'Could not read the shared payload: $e',
+      const Icon(Icons.error_outline, color: Colors.white),
+    );
+    return;
+  }
+
+  // Phase A fallback: plain DSL text → Quick Entry parser → Tasks table.
   final parsed = TaskParser.parseQuickEntry(raw);
   if (parsed.isEmpty) return;
 
   final models = TaskParser.convertToTaskModels(parsed);
   await DbHelper().insertAll(models);
 
-  // Trigger the week view to re-query so newly-dated tasks show immediately.
   try {
     Get.find<HomeController>().getTasks();
   } catch (_) {
@@ -80,7 +112,7 @@ Future<void> _processIncomingShare(SharedMedia media) async {
   final count = models.length;
   Utils.showSnackBar(
     'Imported',
-    'Added $count task${count == 1 ? '' : 's'} from Paper2Todo',
+    'Added $count task${count == 1 ? '' : 's'} from share',
     const Icon(Icons.move_to_inbox, color: Colors.white),
   );
 }

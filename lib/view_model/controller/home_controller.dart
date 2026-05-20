@@ -77,6 +77,11 @@ class HomeController extends GetxController {
   }
 
   RxInt barIndex = 0.obs;
+  // Sub-mode within the Quick Entry tab (text / stylus / paper-capture inbox).
+  // Stored as an int because the enum lives in the view layer; 0=text,
+  // 1=stylus, 2=inbox. External callers (the share receiver) flip this to
+  // open the inbox programmatically.
+  RxInt quickEntryMode = 0.obs;
   final ScrollController scrollController = ScrollController();
   final RxList<Project> projects = <Project>[].obs;
   StreamSubscription<List<Project>>? _projectSubscription;

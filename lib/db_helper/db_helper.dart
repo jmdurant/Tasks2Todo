@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart' show Value;
 import 'package:todo/data/local/database/app_database.dart';
 import 'package:todo/model/task_model.dart';
+import 'package:todo/util/paper2todo_payload.dart';
 
 class DbHelper {
   DbHelper._internal();
@@ -97,5 +98,63 @@ class DbHelper {
 
   Future<List<TaskModel>> getTasksWithReminders() {
     return _taskDao.getTasksWithReminders();
+  }
+
+  // ─── Paper2Todo Inbox ──────────────────────────────────────────────────
+
+  /// Persist a paper2todo capture payload into the local CaptureSessions /
+  /// ParsedItems tables. The Inbox view streams from these directly.
+  Future<void> insertPaper2TodoCapture(Paper2TodoPayload payload) async {
+    await _captureSessionDao.upsertSession(
+      CaptureSessionsCompanion(
+        id: Value(payload.sessionId),
+        capturedAt: Value(payload.capturedAt),
+        // We don't carry the image across processes — leave the path empty
+        // so the Inbox card can render "no preview" without erroring.
+        imageFilePath: const Value(''),
+        syncStatus: const Value('pending'),
+      ),
+    );
+
+    if (payload.items.isEmpty) return;
+    await _parsedItemDao.upsertItems(payload.items.map((item) {
+      return ParsedItemsCompanion(
+        id: Value(item.id),
+        sessionId: Value(payload.sessionId),
+        type: Value(item.type),
+        content: Value(item.content),
+        tags: Value(item.tags.join(',')),
+        dueDate: Value(item.dueDate),
+        dueTime: Value(item.dueTime),
+        priority: Value(item.priority),
+        location: Value(item.location),
+        parentProject: Value(item.parentProject),
+        status: Value(item.status),
+        confidence: Value(item.confidence),
+        note: Value(item.note),
+      );
+    }).toList());
+  }
+
+  /// Streams every parsed item that hasn't been promoted to a Task yet.
+  Stream<List<ParsedItem>> watchInboxItems() {
+    return _parsedItemDao.watchPendingItems();
+  }
+
+  /// Streams capture sessions; consumers join with [watchInboxItems] to
+  /// render headers per capture.
+  Stream<List<CaptureSession>> watchCaptureSessions() {
+    return _database.select(_database.captureSessions).watch();
+  }
+
+  /// Reject a single inbox item without promoting it.
+  Future<int> rejectInboxItem(String id) {
+    return _parsedItemDao.deleteItem(id);
+  }
+
+  /// Mark an inbox item as promoted: writes [taskKey] into its externalId so
+  /// the stream filter hides it.
+  Future<int> markInboxItemPromoted(String id, String taskKey) {
+    return _parsedItemDao.markPromoted(id, taskKey);
   }
 }

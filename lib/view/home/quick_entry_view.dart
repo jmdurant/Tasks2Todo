@@ -12,8 +12,9 @@ import '../../db_helper/db_helper.dart';
 import '../../util/task_parser.dart';
 import '../../util/utils.dart';
 import '../../view_model/controller/home_controller.dart';
+import 'components/inbox_section.dart';
 
-enum QuickEntryInputMode { text, stylus }
+enum QuickEntryInputMode { text, stylus, inbox }
 
 class QuickEntryView extends StatefulWidget {
   const QuickEntryView({super.key});
@@ -28,8 +29,12 @@ class _QuickEntryViewState extends State<QuickEntryView> {
   final PencilFieldController pencilController = PencilFieldController();
   final DbHelper db = DbHelper();
   bool isProcessing = false;
-  QuickEntryInputMode inputMode = QuickEntryInputMode.text;
   PencilDrawing? lastDrawing;
+
+  QuickEntryInputMode get inputMode =>
+      QuickEntryInputMode.values[controller.quickEntryMode.value];
+  set inputMode(QuickEntryInputMode m) =>
+      controller.quickEntryMode.value = m.index;
 
   @override
   void initState() {
@@ -174,15 +179,18 @@ class _QuickEntryViewState extends State<QuickEntryView> {
 
     return Padding(
       padding: const EdgeInsets.all(20.0),
-      child: Column(
+      child: Obx(() => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 250),
-              child: inputMode == QuickEntryInputMode.text
-                  ? _buildTextEntry(context, scheme)
-                  : _buildStylusEntry(context, scheme),
+              child: switch (inputMode) {
+                QuickEntryInputMode.text => _buildTextEntry(context, scheme),
+                QuickEntryInputMode.stylus =>
+                  _buildStylusEntry(context, scheme),
+                QuickEntryInputMode.inbox => const InboxSection(),
+              },
             ),
           ),
           const SizedBox(height: 16),
@@ -190,38 +198,43 @@ class _QuickEntryViewState extends State<QuickEntryView> {
             children: [
               _buildModeToggle(context),
               const SizedBox(width: 16),
-              Expanded(
-                child: SizedBox(
-                  height: 48,
-                  child: FilledButton(
-                    onPressed: isProcessing ? null : _processEntry,
-                    style: FilledButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+              // Inbox mode has no "process" button — Accept/Reject lives on
+              // each card. Hide the bottom action entirely so the layout
+              // doesn't shift jarringly.
+              if (inputMode != QuickEntryInputMode.inbox)
+                Expanded(
+                  child: SizedBox(
+                    height: 48,
+                    child: FilledButton(
+                      onPressed: isProcessing ? null : _processEntry,
+                      style: FilledButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                    ),
-                    child: isProcessing
-                        ? SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              color: scheme.onPrimary,
-                              strokeWidth: 2,
+                      child: isProcessing
+                          ? SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: scheme.onPrimary,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : Text(
+                              inputMode == QuickEntryInputMode.text
+                                  ? 'Process Tasks'
+                                  : 'Save Entry',
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
                             ),
-                          )
-                        : Text(
-                            inputMode == QuickEntryInputMode.text
-                                ? 'Process Tasks'
-                                : 'Save Entry',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         ],
-      ),
+      )),
     );
   }
 
@@ -236,7 +249,8 @@ class _QuickEntryViewState extends State<QuickEntryView> {
       child: ToggleButtons(
         isSelected: [
           inputMode == QuickEntryInputMode.text,
-          inputMode == QuickEntryInputMode.stylus
+          inputMode == QuickEntryInputMode.stylus,
+          inputMode == QuickEntryInputMode.inbox,
         ],
         onPressed: (index) {
           setState(() {
@@ -249,12 +263,16 @@ class _QuickEntryViewState extends State<QuickEntryView> {
         constraints: const BoxConstraints(minHeight: 48, minWidth: 56),
         children: const [
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.symmetric(horizontal: 14),
             child: Icon(Icons.keyboard, size: 22),
           ),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.symmetric(horizontal: 14),
             child: Icon(Icons.gesture, size: 22),
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 14),
+            child: Icon(Icons.move_to_inbox, size: 22),
           ),
         ],
       ),

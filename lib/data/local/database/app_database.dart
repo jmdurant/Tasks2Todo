@@ -390,6 +390,25 @@ class ParsedItemDao extends DatabaseAccessor<AppDatabase>
     return (delete(parsedItems)..where((tbl) => tbl.sessionId.equals(sessionId)))
         .go();
   }
+
+  Future<int> deleteItem(String id) {
+    return (delete(parsedItems)..where((tbl) => tbl.id.equals(id))).go();
+  }
+
+  /// Marks an item as promoted into the Tasks table; the new task's key is
+  /// stored in externalId so the inbox can filter it out.
+  Future<int> markPromoted(String id, String taskKey) {
+    return (update(parsedItems)..where((tbl) => tbl.id.equals(id))).write(
+      ParsedItemsCompanion(externalId: Value(taskKey)),
+    );
+  }
+
+  /// Streams every parsed item that hasn't been promoted yet, newest first
+  /// (paired with sessions in the UI layer).
+  Stream<List<ParsedItem>> watchPendingItems() {
+    return (select(parsedItems)..where((tbl) => tbl.externalId.isNull()))
+        .watch();
+  }
 }
 
 @DriftAccessor(tables: [Projects])
