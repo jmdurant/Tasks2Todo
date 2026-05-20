@@ -4,149 +4,121 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+
 import '../../../util/utils.dart';
 import '../../../view/home/home.dart';
-import '../../../view_model/controller/home_controller.dart';
-import '../../../view_model/controller/new_task_controller.dart';
 import '../../../view_model/controller/signin_controller.dart';
 import '../../../view_model/controller/signup_controller.dart';
 import '../../shared pref/shared_pref.dart';
 
 void _navigateToHome() {
-  Get.put(HomeController());
-  Get.put(NewTaskController());
   Get.off(() => HomePage());
 }
-
 
 class FirebaseService {
   static final FirebaseAuth auth = FirebaseAuth.instance;
   static final FirebaseDatabase database = FirebaseDatabase.instance;
-  static final signInController = Get.put(SignInController());
-  static final signUpController = Get.put(SignupController());
 
+  /// Profile node for the signed-in user. Keyed by Firebase Auth uid — *never*
+  /// by email-prefix (which collides across domains and breaks on dotted
+  /// locals).
+  static DatabaseReference _profileRef(String uid) =>
+      database.ref('Accounts').child(uid);
 
+  /// Task storage node for the signed-in user.
+  static DatabaseReference _tasksRef(String uid) =>
+      database.ref('Tasks').child(uid);
 
   static Future<void> createAccount() async {
+    final SignupController signUpController = Get.find<SignupController>();
+    signUpController.setLoading(true);
+    final String email = signUpController.email.value.text.trim();
+    final String name = signUpController.name.value.text.trim();
+    final String password = signUpController.password.value.text;
+
     try {
-      signUpController.setLoading(true);
-      final String str = signUpController.email.value.text.toString();
-      final String node = str.substring(0, str.indexOf('@'));
-      database.ref('Accounts').child(node).set({
-        'name': '${signUpController.name.value.text} ',
-        'email': signUpController.email.value.text.toString(),
-        'password': signUpController.password.value.text.toString(),
-      }).then((value) {
-        auth
-            .createUserWithEmailAndPassword(
-                email: signUpController.email.value.text.toString(),
-                password: signUpController.password.value.text.toString())
-            .then((value) {
-          UserPref.setUser(
-              '${signUpController.name.value.text} ',
-              signUpController.email.value.text.toString(),
-              signUpController.password.value.text.toString(),
-              node,
-              value.user!.uid.toString());
-          Utils.showSnackBar(
-              'Sign up',
-              "Account is successfully created",
-              const Icon(
-                Icons.done,
-                color: Colors.white,
-              ));
-          _navigateToHome();
-          signUpController.setLoading(false);
-        }).onError((error, stackTrace) {
-          Utils.showSnackBar(
-              'Error',
-              Utils.extractFirebaseError(error.toString()),
-              const Icon(
-                FontAwesomeIcons.triangleExclamation,
-                color: Colors.red,
-              ));
-          signUpController.setLoading(false);
-        });
-      }).onError((error, stackTrace) {
-        Utils.showSnackBar(
-            'Error',
-            Utils.extractFirebaseError(error.toString()),
-            const Icon(
-              FontAwesomeIcons.triangleExclamation,
-              color: Colors.red,
-            ));
-        signUpController.setLoading(false);
+      final UserCredential cred = await auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      final User user = cred.user!;
+      await _profileRef(user.uid).set(<String, Object?>{
+        'name': name,
+        'email': email,
       });
+      await UserPref.setUser(
+        name: name,
+        email: email,
+        uid: user.uid,
+        token: await user.getIdToken() ?? '',
+      );
+      Utils.showSnackBar(
+        'Sign up',
+        'Account is successfully created',
+        const Icon(Icons.done, color: Colors.white),
+      );
+      _navigateToHome();
+    } on FirebaseAuthException catch (e) {
+      Utils.showSnackBar(
+        'Error',
+        e.message ?? 'Sign up failed',
+        const Icon(FontAwesomeIcons.triangleExclamation, color: Colors.red),
+      );
     } catch (e) {
       Utils.showSnackBar(
-          'Error',
-          Utils.extractFirebaseError(e.toString()),
-          const Icon(
-            FontAwesomeIcons.triangleExclamation,
-            color: Colors.red,
-          ));
-      signUpController.setLoading(true);
+        'Error',
+        Utils.extractFirebaseError(e.toString()),
+        const Icon(FontAwesomeIcons.triangleExclamation, color: Colors.red),
+      );
+    } finally {
+      signUpController.setLoading(false);
     }
   }
+
   static Future<void> loginAccount() async {
+    final SignInController signInController = Get.find<SignInController>();
+    signInController.setLoading(true);
+    final String email = signInController.email.value.text.trim();
+    final String password = signInController.password.value.text;
+
     try {
-      signInController.setLoading(true);
-      auth
-          .signInWithEmailAndPassword(
-        email: signInController.email.value.text.toString(),
-        password: signInController.password.value.text.toString(),
-      )
-          .then((value) {
-        String node =
-            value.user!.email!.substring(0, value.user!.email!.indexOf('@'));
-        database.ref('Accounts').child(node).onValue.listen((event) {
-          UserPref.setUser(
-            event.snapshot.child('name').value.toString(),
-            event.snapshot.child('email').value.toString(),
-            event.snapshot.child('password').value.toString(),
-            node,
-            value.toString(),
-          );
-          Utils.showSnackBar(
-              'Sign up',
-              "Successfully Login.Welcome Back!",
-              const Icon(
-                Icons.done,
-                color: Colors.white,
-              ));
-          _navigateToHome();
-          signInController.setLoading(false);
-        }).onError((error, stackTrace) {
-          Utils.showSnackBar(
-              'Error',
-              Utils.extractFirebaseError(error.toString()),
-              const Icon(
-                FontAwesomeIcons.triangleExclamation,
-                color: Colors.red,
-              ));
-          signInController.setLoading(false);
-        });
-      }).onError((error, stackTrace) {
-        Utils.showSnackBar(
-            'Error',
-            Utils.extractFirebaseError(error.toString()),
-            const Icon(
-              FontAwesomeIcons.triangleExclamation,
-              color: Colors.red,
-            ));
-        signInController.setLoading(false);
-      });
+      final UserCredential cred = await auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      final User user = cred.user!;
+      final DataSnapshot snap = await _profileRef(user.uid).get();
+      final String displayName =
+          snap.child('name').value?.toString() ?? user.displayName ?? email;
+      await UserPref.setUser(
+        name: displayName,
+        email: snap.child('email').value?.toString() ?? email,
+        uid: user.uid,
+        token: await user.getIdToken() ?? '',
+      );
+      Utils.showSnackBar(
+        'Sign in',
+        'Successfully logged in. Welcome back!',
+        const Icon(Icons.done, color: Colors.white),
+      );
+      _navigateToHome();
+    } on FirebaseAuthException catch (e) {
+      Utils.showSnackBar(
+        'Error',
+        e.message ?? 'Sign in failed',
+        const Icon(FontAwesomeIcons.triangleExclamation, color: Colors.red),
+      );
     } catch (e) {
       Utils.showSnackBar(
-          'Error',
-          Utils.extractFirebaseError(e.toString()),
-          const Icon(
-            FontAwesomeIcons.triangleExclamation,
-            color: Colors.red,
-          ));
-      signInController.setLoading(true);
+        'Error',
+        Utils.extractFirebaseError(e.toString()),
+        const Icon(FontAwesomeIcons.triangleExclamation, color: Colors.red),
+      );
+    } finally {
+      signInController.setLoading(false);
     }
   }
+
   static Future<void> signInWithGoogle() async {
     try {
       final GoogleSignInAccount account = await GoogleSignIn.instance
@@ -154,12 +126,10 @@ class FirebaseService {
       final GoogleSignInAuthentication authentication = account.authentication;
       if (authentication.idToken == null) {
         Utils.showSnackBar(
-            'Error',
-            'Unable to fetch credentials from Google. Please try again.',
-            const Icon(
-              FontAwesomeIcons.triangleExclamation,
-              color: Colors.red,
-            ));
+          'Error',
+          'Unable to fetch credentials from Google. Please try again.',
+          const Icon(FontAwesomeIcons.triangleExclamation, color: Colors.red),
+        );
         return;
       }
       final OAuthCredential credential = GoogleAuthProvider.credential(
@@ -170,72 +140,63 @@ class FirebaseService {
       final User? user = userCredential.user;
       if (user == null || user.email == null) {
         Utils.showSnackBar(
-            'Error',
-            'Google account is missing required information.',
-            const Icon(
-              FontAwesomeIcons.triangleExclamation,
-              color: Colors.red,
-            ));
+          'Error',
+          'Google account is missing required information.',
+          const Icon(FontAwesomeIcons.triangleExclamation, color: Colors.red),
+        );
         return;
       }
       final String email = user.email!;
-      final String node = email.substring(0, email.indexOf('@'));
-      await database.ref('Accounts').child(node).set({
-        'name': user.displayName ?? account.displayName ?? email,
+      final String name =
+          user.displayName ?? account.displayName ?? email;
+      await _profileRef(user.uid).set(<String, Object?>{
+        'name': name,
         'email': email,
       });
-      UserPref.setUser(
-        user.displayName ?? account.displayName ?? email,
-        email,
-        "NOPASSWORD",
-        node,
-        user.uid,
+      await UserPref.setUser(
+        name: name,
+        email: email,
+        uid: user.uid,
+        token: await user.getIdToken() ?? '',
       );
       Utils.showSnackBar(
-          'Login',
-          'Successfully logged in with Google.',
-          const Icon(
-            Icons.done,
-            color: Colors.white,
-          ));
+        'Login',
+        'Successfully logged in with Google.',
+        const Icon(Icons.done, color: Colors.white),
+      );
       _navigateToHome();
     } on GoogleSignInException catch (error) {
       Utils.showSnackBar(
-          'Error',
-          error.description ?? 'Google sign-in was cancelled.',
-          const Icon(
-            FontAwesomeIcons.triangleExclamation,
-            color: Colors.red,
-          ));
+        'Error',
+        error.description ?? 'Google sign-in was cancelled.',
+        const Icon(FontAwesomeIcons.triangleExclamation, color: Colors.red),
+      );
     } catch (e) {
       Utils.showSnackBar(
-          'Error',
-          Utils.extractFirebaseError(e.toString()),
-          const Icon(
-            FontAwesomeIcons.triangleExclamation,
-            color: Colors.red,
-          ));
+        'Error',
+        Utils.extractFirebaseError(e.toString()),
+        const Icon(FontAwesomeIcons.triangleExclamation, color: Colors.red),
+      );
     }
   }
-  static Future<void> signInWithApple()async{
+
+  static Future<void> signInWithApple() async {}
+
+  /// Total task count for the signed-in user.
+  static Future<int> childCount() async {
+    final User? user = auth.currentUser;
+    if (user == null) return 0;
+    final snap = await _tasksRef(user.uid).get();
+    return snap.children.length;
   }
 
-
-
-  static Future<int> childCount()async{
-    String str = auth.currentUser!.email.toString();
-    String node = str.substring(0, str.indexOf('@'));
-    return database.ref('Tasks').child(node).once().then((value){
-      return value.snapshot.children.length;
+  /// Update a single field on a task in the cloud.
+  static Future<void> update(
+      String key, String updateKey, String updateValue) async {
+    final User? user = auth.currentUser;
+    if (user == null) return;
+    await _tasksRef(user.uid).child(key).update(<String, Object?>{
+      updateKey: updateValue,
     });
   }
-  static Future<void> update(String key,String updateKey,String updateValue) async{
-    String str = auth.currentUser!.email.toString();
-    String node = str.substring(0, str.indexOf('@'));
-   database.ref('Tasks').child(node).child(key).update({
-     updateKey : updateValue
-   });
-  }
-
-
 }

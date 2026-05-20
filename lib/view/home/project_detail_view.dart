@@ -46,7 +46,7 @@ class _ProjectDetailViewState extends State<ProjectDetailView> {
 
   Future<void> _deleteTask(TaskModel task) async {
     await _db.deleteTask(task.key!);
-    NotificationService.instance.cancelTaskReminder(task.key!);
+    NotificationService.instance.cancelTaskReminder(task);
     _loadTasks();
     _homeController.getTasks();
 
@@ -307,7 +307,7 @@ class _ProjectDetailViewState extends State<ProjectDetailView> {
                   ],
                 )
               : null,
-          trailing: _buildPriorityChip(context, task.periority),
+          trailing: _buildPriorityChip(context, task.priority),
         ),
       ),
     );

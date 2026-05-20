@@ -47,7 +47,7 @@ class NotificationService {
   }
 
   /// Schedule a reminder notification for a task.
-  /// Returns the notification ID (derived from task key hash).
+  /// Returns the notification ID, or -1 if nothing was scheduled.
   Future<int> scheduleTaskReminder(TaskModel task) async {
     if (!_initialized) await initialize();
     if (!task.hasReminder) return -1;
@@ -55,10 +55,9 @@ class NotificationService {
     final scheduledTime = _getScheduledTime(task);
     if (scheduledTime == null) return -1;
 
-    // Don't schedule if already in the past
     if (scheduledTime.isBefore(tz.TZDateTime.now(tz.local))) return -1;
 
-    final int notificationId = task.key.hashCode;
+    final int notificationId = _notificationIdFor(task);
 
     final reminderLabel = task.reminderMinutesBefore == 0
         ? 'Now'
@@ -83,16 +82,25 @@ class NotificationService {
           presentSound: true,
         ),
       ),
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       matchDateTimeComponents: null,
     );
 
     return notificationId;
   }
 
-  /// Cancel a specific task's reminder
-  Future<void> cancelTaskReminder(String taskKey) async {
-    await _plugin.cancel(taskKey.hashCode);
+  /// Cancel a specific task's reminder by its stored notification id.
+  Future<void> cancelTaskReminder(TaskModel task) async {
+    await _plugin.cancel(_notificationIdFor(task));
+  }
+
+  /// Returns the persisted notification id, falling back to a deterministic
+  /// 31-bit derivation from the task key for pre-v5 rows.
+  int _notificationIdFor(TaskModel task) {
+    final int? stored = task.notificationId;
+    if (stored != null && stored != 0) return stored;
+    final int? parsed = int.tryParse(task.key ?? '');
+    return ((parsed ?? task.key.hashCode) & 0x7FFFFFFF);
   }
 
   /// Cancel all reminders and reschedule from the database

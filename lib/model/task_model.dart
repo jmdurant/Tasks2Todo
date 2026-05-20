@@ -6,7 +6,7 @@ class TaskModel {
   String? category;
   String? description;
   String? image;
-  String? periority;
+  String? priority;
   String? startTime;
   String? endTime;
   String? date;
@@ -15,13 +15,14 @@ class TaskModel {
   String? tags; // Comma-separated list of tags
   String? recurrence; // 'none', 'daily', 'weekly', 'monthly'
   int? reminderMinutesBefore; // -1 = no reminder, 0 = at time, 15 = 15 min before, etc.
+  int? notificationId; // Stable 31-bit id used to schedule/cancel the reminder.
 
   TaskModel({
     required this.key,
     required this.startTime,
     required this.endTime,
     required this.date,
-    required this.periority,
+    required this.priority,
     required this.description,
     required this.category,
     required this.title,
@@ -31,6 +32,7 @@ class TaskModel {
     this.tags,
     this.recurrence = 'none',
     this.reminderMinutesBefore = -1,
+    this.notificationId,
   });
 
   TaskModel.fromMap(Map<String, dynamic> res) {
@@ -39,7 +41,7 @@ class TaskModel {
     category = res['category'];
     description = res['description'];
     image = res['image'];
-    periority = res['periority'];
+    priority = res['priority'];
     show = res['show'];
     startTime = res['startTime'];
     endTime = res['endTime'];
@@ -48,6 +50,7 @@ class TaskModel {
     tags = res['tags'];
     recurrence = res['recurrence'] ?? 'none';
     reminderMinutesBefore = res['reminderMinutesBefore'] ?? -1;
+    notificationId = res['notificationId'];
   }
 
   Map<String, Object?> toMap() {
@@ -57,7 +60,7 @@ class TaskModel {
       'category': category,
       'description': description,
       'image': image,
-      'periority': periority,
+      'priority': priority,
       'startTime': startTime,
       'endTime': endTime,
       'date': date,
@@ -66,6 +69,7 @@ class TaskModel {
       'tags': tags,
       'recurrence': recurrence,
       'reminderMinutesBefore': reminderMinutesBefore,
+      'notificationId': notificationId,
     };
   }
 
@@ -75,7 +79,7 @@ class TaskModel {
     String? category,
     String? description,
     String? image,
-    String? periority,
+    String? priority,
     String? startTime,
     String? endTime,
     String? date,
@@ -84,6 +88,7 @@ class TaskModel {
     String? tags,
     String? recurrence,
     int? reminderMinutesBefore,
+    int? notificationId,
   }) {
     return TaskModel(
       key: key ?? this.key,
@@ -91,7 +96,7 @@ class TaskModel {
       category: category ?? this.category,
       description: description ?? this.description,
       image: image ?? this.image,
-      periority: periority ?? this.periority,
+      priority: priority ?? this.priority,
       startTime: startTime ?? this.startTime,
       endTime: endTime ?? this.endTime,
       date: date ?? this.date,
@@ -100,6 +105,7 @@ class TaskModel {
       tags: tags ?? this.tags,
       recurrence: recurrence ?? this.recurrence,
       reminderMinutesBefore: reminderMinutesBefore ?? this.reminderMinutesBefore,
+      notificationId: notificationId ?? this.notificationId,
     );
   }
 
@@ -110,9 +116,7 @@ class TaskModel {
   /// Helper to set tags from a list
   set tagList(List<String> list) => tags = list.join(',');
 
-  /// Whether this task has a recurrence set
   bool get isRecurring => recurrence != null && recurrence != 'none';
 
-  /// Whether this task has a reminder set
   bool get hasReminder => reminderMinutesBefore != null && reminderMinutesBefore! >= 0;
 }

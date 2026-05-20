@@ -24,11 +24,11 @@ class SyncModeSwitch extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Enable cloud sync (Firebase)'),
+              title: const Text('Use Firebase account'),
               subtitle: Text(
                 cloudEnabled
-                    ? 'Tasks sync with Firebase'
-                    : 'Local-only mode (default)',
+                    ? 'Sign in with Firebase (Google/email)'
+                    : 'Sign in locally (default, no network)',
               ),
               value: cloudEnabled,
               onChanged: (bool value) {

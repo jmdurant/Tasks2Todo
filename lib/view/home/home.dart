@@ -40,7 +40,7 @@ class HomePage extends StatelessWidget {
             // Projects View (index 2)
             const ProjectsView(),
             // Settings View (index 3)
-            _SettingsView(),
+            const _SettingsView(),
           ],
         )),
       ),
@@ -49,6 +49,8 @@ class HomePage extends StatelessWidget {
 }
 
 class _SettingsView extends StatelessWidget {
+  const _SettingsView();
+
   @override
   Widget build(BuildContext context) {
     final ColorScheme scheme = Theme.of(context).colorScheme;

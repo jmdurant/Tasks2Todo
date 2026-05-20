@@ -132,9 +132,9 @@ class _SearchDialogState extends State<SearchDialog> {
 
   Widget _buildResultTile(TaskModel task, ColorScheme scheme) {
     final bool isComplete = task.status == 'complete';
-    final Color priorityColor = task.periority == 'High'
+    final Color priorityColor = task.priority == 'High'
         ? scheme.error
-        : task.periority == 'Medium'
+        : task.priority == 'Medium'
             ? scheme.tertiary
             : scheme.outline;
 
@@ -219,7 +219,7 @@ class _SearchDialogState extends State<SearchDialog> {
             ),
 
             // Priority indicator
-            if (task.periority != null && task.periority != 'Low')
+            if (task.priority != null && task.priority != 'Low')
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -227,7 +227,7 @@ class _SearchDialogState extends State<SearchDialog> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  task.periority!,
+                  task.priority!,
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,

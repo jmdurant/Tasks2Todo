@@ -1,7 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:todo/view/new_task/components/periority_container.dart';
+import 'package:todo/view/new_task/components/priority_container.dart';
 import 'package:todo/view/new_task/components/text_input.dart';
 import 'package:todo/view_model/controller/new_task_controller.dart';
 

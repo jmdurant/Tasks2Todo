@@ -243,7 +243,7 @@ class _StatsViewState extends State<StatsView> {
   Widget _buildPriorityBreakdown(ColorScheme scheme) {
     int high = 0, medium = 0, low = 0;
     for (final task in _allTasks) {
-      switch (task.periority) {
+      switch (task.priority) {
         case 'High':
           high++;
           break;

@@ -54,7 +54,7 @@ class _TaskDetailViewState extends State<TaskDetailView> {
     _titleController = TextEditingController(text: widget.task.title ?? '');
     _descriptionController = TextEditingController(text: widget.task.description ?? '');
     _selectedProject = widget.task.category ?? 'Inbox';
-    _selectedPriority = widget.task.periority ?? 'Low';
+    _selectedPriority = widget.task.priority ?? 'Low';
     _selectedDate = widget.task.date ?? '';
     _startTime = widget.task.startTime ?? '';
     _endTime = widget.task.endTime ?? '';
@@ -97,7 +97,7 @@ class _TaskDetailViewState extends State<TaskDetailView> {
       title: _titleController.text.trim(),
       description: _descriptionController.text.trim(),
       category: _selectedProject,
-      periority: _selectedPriority,
+      priority: _selectedPriority,
       date: _selectedDate,
       startTime: _startTime,
       endTime: _endTime,
@@ -108,7 +108,7 @@ class _TaskDetailViewState extends State<TaskDetailView> {
 
     await _db.insert(updatedTask); // insertOnConflictUpdate handles updates
     // Reschedule reminder
-    await NotificationService.instance.cancelTaskReminder(updatedTask.key!);
+    await NotificationService.instance.cancelTaskReminder(updatedTask);
     if (updatedTask.hasReminder) {
       await NotificationService.instance.scheduleTaskReminder(updatedTask);
     }
@@ -136,7 +136,7 @@ class _TaskDetailViewState extends State<TaskDetailView> {
 
     if (confirmed == true) {
       await _db.deleteTask(widget.task.key!);
-      NotificationService.instance.cancelTaskReminder(widget.task.key!);
+      NotificationService.instance.cancelTaskReminder(widget.task);
       _homeController.getTasks();
       Get.back();
     }

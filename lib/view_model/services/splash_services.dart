@@ -4,25 +4,18 @@ import 'package:todo/config/app_config.dart';
 import 'package:todo/view/home/home.dart';
 
 import '../../view/sign up/sign_up.dart';
-import '../controller/home_controller.dart';
-import '../controller/new_task_controller.dart';
 
-class SplashServices{
-  static void checkLogin()async{
+class SplashServices {
+  static void checkLogin() async {
     if (!AppConfig.firebaseAvailable) {
-      // No Firebase — skip auth entirely and go to home
-      Get.put(HomeController());
-      Get.put(NewTaskController());
       Get.off(() => HomePage());
       return;
     }
-    SharedPreferences pref=await SharedPreferences.getInstance();
-    String? uid=pref.getString('TOKEN');
-    if(uid==null){
+    final SharedPreferences pref = await SharedPreferences.getInstance();
+    final String? uid = pref.getString('UID');
+    if (uid == null || uid.isEmpty) {
       Get.off(() => SignUp());
-    }else{
-      Get.put(HomeController());
-      Get.put(NewTaskController());
+    } else {
       Get.off(() => HomePage());
     }
   }

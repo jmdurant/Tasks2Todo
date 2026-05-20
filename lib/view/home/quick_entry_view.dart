@@ -74,9 +74,7 @@ class _QuickEntryViewState extends State<QuickEntryView> {
       );
       final taskModels = TaskParser.convertToTaskModels(parsedTasks);
 
-      for (var task in taskModels) {
-        await db.insert(task);
-      }
+      await db.insertAll(taskModels);
 
       await controller.getTasks();
       textController.clear();

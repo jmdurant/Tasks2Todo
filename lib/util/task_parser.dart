@@ -146,12 +146,14 @@ class TaskParser {
       content = content.replaceAll(tagMatch.group(0)!, '').trim();
     }
 
-    // Extract note (: text)
-    final notePattern = RegExp(r':\s*([^#//]+)');
+    // Extract note (" : text "). The colon must be surrounded by whitespace
+    // (or anchored to start) so we don't match `14:30` inside times. Notes
+    // capture until the reference marker (#) or end of line.
+    final notePattern = RegExp(r'(?:^|\s):\s+([^#]+)');
     final noteMatch = notePattern.firstMatch(content);
     if (noteMatch != null) {
       note = noteMatch.group(1)!.trim();
-      content = content.replaceAll(noteMatch.group(0)!, '').trim();
+      content = content.replaceAll(noteMatch.group(0)!, ' ').trim();
     }
 
     // Extract reference (# ref)
@@ -278,7 +280,7 @@ class TaskParser {
         category: parsed.project ?? 'Inbox',
         description: description.isEmpty ? '' : description,
         image: '',
-        periority: parsed.priority,
+        priority: parsed.priority,
         startTime: parsed.startTime ?? '',
         endTime: parsed.endTime ?? '',
         date: parsed.date ?? DateFormat('dd/MM/yyyy').format(now),

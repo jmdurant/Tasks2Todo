@@ -395,7 +395,7 @@ class _ProjectsViewState extends State<ProjectsView> {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            if (task.periority == 'High')
+            if (task.priority == 'High')
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
@@ -411,7 +411,7 @@ class _ProjectsViewState extends State<ProjectsView> {
                   ),
                 ),
               )
-            else if (task.periority == 'Medium')
+            else if (task.priority == 'Medium')
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(

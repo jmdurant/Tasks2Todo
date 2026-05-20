@@ -440,7 +440,7 @@ void main() {
       final m = models[0];
       expect(m.title, isNotNull);
       expect(m.status, 'unComplete');
-      expect(m.periority, 'Medium');
+      expect(m.priority, 'Medium');
       expect(m.category, 'Inbox');
       expect(m.startTime, '09:00:AM');
       expect(m.endTime, '09:00:AM');

@@ -146,7 +146,7 @@ class NewTaskController extends GetxController {
         startTime: startTime.value,
         endTime: endTime.value,
         date: selectedDate.value,
-        periority: selectedPriority.value,
+        priority: selectedPriority.value,
         description: description.value.text.toString(),
         category: category.value.text.toString(),
         title: label.value.text.toString(),

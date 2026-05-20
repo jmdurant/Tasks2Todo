@@ -57,6 +57,7 @@ dependencies:
   pencil_field: ^0.4.10
   flutter_local_notifications: ^19.0.0
   timezone: ^0.10.0
+  crypto: ^3.0.6
 
 dev_dependencies:
   flutter_test:

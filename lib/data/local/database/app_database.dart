@@ -12,7 +12,7 @@ class Tasks extends Table {
   TextColumn get category => text()();
   TextColumn get description => text()();
   TextColumn get image => text()();
-  TextColumn get periority => text()();
+  TextColumn get priority => text()();
   TextColumn get startTime => text()();
   TextColumn get endTime => text()();
   TextColumn get date => text()();
@@ -23,6 +23,8 @@ class Tasks extends Table {
   TextColumn get recurrence => text().withDefault(const Constant('none'))();
   // Minutes before task start time to send reminder (0 = at time, -1 = no reminder)
   IntColumn get reminderMinutesBefore => integer().withDefault(const Constant(-1))();
+  // Stable 31-bit notification id; 0 means "not scheduled yet".
+  IntColumn get notificationId => integer().withDefault(const Constant(0))();
 
   @override
   Set<Column> get primaryKey => {key};
@@ -81,7 +83,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -102,6 +104,29 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(tasks, tasks.recurrence);
             await m.addColumn(tasks, tasks.reminderMinutesBefore);
           }
+          if (from < 5) {
+            // Rename legacy `periority` -> `priority` and add a stable
+            // notification id. We use raw SQL with DEFAULT clauses so that
+            // existing rows satisfy the NOT NULL constraints during ALTER.
+            await customStatement(
+                "ALTER TABLE tasks ADD COLUMN priority TEXT NOT NULL DEFAULT 'Low'");
+            await customStatement(
+                "ALTER TABLE tasks ADD COLUMN notification_id INTEGER NOT NULL DEFAULT 0");
+            // Copy data from the old misspelled column.
+            await customStatement(
+                "UPDATE tasks SET priority = periority WHERE periority IS NOT NULL");
+            // Derive a stable 31-bit notification id from the existing key.
+            // Keys created by the app are microsecondsSinceEpoch.toString();
+            // for anything else (legacy / imported rows) fall back to rowid.
+            await customStatement(
+                "UPDATE tasks SET notification_id = "
+                "CASE WHEN CAST(key AS INTEGER) > 0 "
+                "  THEN CAST(key AS INTEGER) % 2147483647 "
+                "  ELSE rowid END");
+            // SQLite 3.35+ supports DROP COLUMN. sqlite3_flutter_libs bundles
+            // a recent build, so this is safe.
+            await customStatement("ALTER TABLE tasks DROP COLUMN periority");
+          }
         },
       );
 }
@@ -119,7 +144,7 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
         startTime: row.startTime,
         endTime: row.endTime,
         date: row.date,
-        periority: row.periority,
+        priority: row.priority,
         description: row.description,
         category: row.category,
         title: row.title,
@@ -129,9 +154,13 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
         tags: row.tags,
         recurrence: row.recurrence,
         reminderMinutesBefore: row.reminderMinutesBefore,
+        notificationId: row.notificationId,
       );
 
   Future<void> insertTask(TaskModel model) {
+    final int notifId = model.notificationId == null || model.notificationId == 0
+        ? _stableNotificationId(model.key!)
+        : model.notificationId!;
     return into(tasks).insertOnConflictUpdate(
       TasksCompanion(
         key: Value(model.key!),
@@ -139,7 +168,7 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
         category: Value(model.category!),
         description: Value(model.description!),
         image: Value(model.image!),
-        periority: Value(model.periority!),
+        priority: Value(model.priority!),
         startTime: Value(model.startTime!),
         endTime: Value(model.endTime!),
         date: Value(model.date!),
@@ -148,8 +177,49 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
         tags: Value(model.tags ?? ''),
         recurrence: Value(model.recurrence ?? 'none'),
         reminderMinutesBefore: Value(model.reminderMinutesBefore ?? -1),
+        notificationId: Value(notifId),
       ),
     );
+  }
+
+  /// Derives a deterministic 31-bit notification id from the task key.
+  /// Keys created by the app are `microsecondsSinceEpoch.toString()`, so this
+  /// is essentially the low 31 bits of the creation time — stable across
+  /// restarts and unique unless two keys collide on those bits.
+  static int _stableNotificationId(String key) {
+    final int? parsed = int.tryParse(key);
+    final int raw = parsed ?? key.hashCode;
+    return raw & 0x7FFFFFFF;
+  }
+
+  Future<void> insertAllTasks(List<TaskModel> models) {
+    return batch((b) {
+      b.insertAllOnConflictUpdate(
+        tasks,
+        models.map((m) {
+          final int notifId = m.notificationId == null || m.notificationId == 0
+              ? _stableNotificationId(m.key!)
+              : m.notificationId!;
+          return TasksCompanion(
+            key: Value(m.key!),
+            title: Value(m.title!),
+            category: Value(m.category!),
+            description: Value(m.description!),
+            image: Value(m.image!),
+            priority: Value(m.priority!),
+            startTime: Value(m.startTime!),
+            endTime: Value(m.endTime!),
+            date: Value(m.date!),
+            show: Value(m.show!),
+            status: Value(m.status!),
+            tags: Value(m.tags ?? ''),
+            recurrence: Value(m.recurrence ?? 'none'),
+            reminderMinutesBefore: Value(m.reminderMinutesBefore ?? -1),
+            notificationId: Value(notifId),
+          );
+        }).toList(),
+      );
+    });
   }
 
   Future<List<TaskModel>> getAllTasks() async {

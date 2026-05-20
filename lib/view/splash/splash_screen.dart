@@ -11,9 +11,7 @@ class _SplashViewState extends State<SplashView> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-    // homeController.getTasks();
     SplashServices.checkLogin();
   }
   @override
@@ -75,7 +73,6 @@ class _SplashImageState extends State<SplashImage> with SingleTickerProviderStat
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     _controller = AnimationController(
       vsync: this,

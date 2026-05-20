@@ -21,15 +21,14 @@ Future<void> main() async {
       Get.put(SettingsController(), permanent: true);
   await settingsController.initialize();
 
-  // Initialize notifications and reschedule existing reminders
+  // Register task controllers once for the app's lifetime. Auth flows reset
+  // their state via Get.delete + Get.put on sign-out.
+  Get.put(HomeController(), permanent: true);
+  Get.put(NewTaskController(), permanent: true);
+
   await NotificationService.instance.initialize();
   await NotificationService.instance.requestPermission();
   NotificationService.instance.rescheduleAllReminders();
-
-  if (!AppConfig.firebaseAvailable) {
-    Get.put(HomeController());
-    Get.put(NewTaskController());
-  }
 
   runApp(const MyApp());
 }
@@ -39,15 +38,15 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final SettingsController settingsController = Get.find();
-    final Widget home = AppConfig.firebaseAvailable
-        ? const SplashView()
-        : HomePage();
+    final Widget home =
+        AppConfig.firebaseAvailable ? const SplashView() : HomePage();
     return Obx(() => GetMaterialApp(
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
-          themeMode:
-              settingsController.darkMode.value ? ThemeMode.dark : ThemeMode.light,
+          themeMode: settingsController.darkMode.value
+              ? ThemeMode.dark
+              : ThemeMode.light,
           home: home,
         ));
   }

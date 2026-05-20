@@ -49,7 +49,7 @@ class HomeController extends GetxController {
 
     return dayTasks.where((task) {
       // Priority filter
-      if (filterPriority.value != 'All' && task.periority != filterPriority.value) {
+      if (filterPriority.value != 'All' && task.priority != filterPriority.value) {
         return false;
       }
       // Status filter
@@ -162,8 +162,8 @@ class HomeController extends GetxController {
           return a.status == 'complete' ? 1 : -1;
         }
         // Then by priority
-        final pa = priorityOrder[a.periority] ?? 2;
-        final pb = priorityOrder[b.periority] ?? 2;
+        final pa = priorityOrder[a.priority] ?? 2;
+        final pb = priorityOrder[b.priority] ?? 2;
         return pa.compareTo(pb);
       });
     }
@@ -229,7 +229,7 @@ class HomeController extends GetxController {
 
     // Delete from DB and cancel any reminder
     db.deleteTask(task.key!);
-    NotificationService.instance.cancelTaskReminder(task.key!);
+    NotificationService.instance.cancelTaskReminder(task);
 
     // Show undo snackbar
     Get.showSnackbar(

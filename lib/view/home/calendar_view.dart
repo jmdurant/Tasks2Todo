@@ -56,8 +56,8 @@ class _CalendarViewState extends State<CalendarView> {
         if (a.status != b.status) {
           return a.status == 'complete' ? 1 : -1;
         }
-        final pa = priorityOrder[a.periority] ?? 2;
-        final pb = priorityOrder[b.periority] ?? 2;
+        final pa = priorityOrder[a.priority] ?? 2;
+        final pb = priorityOrder[b.priority] ?? 2;
         return pa.compareTo(pb);
       });
     }
@@ -247,7 +247,7 @@ class _CalendarViewState extends State<CalendarView> {
 
     // Collect unique priorities for dot colors
     final priorities = tasksForDay
-        .map((t) => t.periority)
+        .map((t) => t.priority)
         .toSet()
         .take(3)
         .toList();
@@ -412,7 +412,7 @@ class _CalendarViewState extends State<CalendarView> {
                 height: 40,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(2),
-                  color: _priorityColor(task.periority, scheme),
+                  color: _priorityColor(task.priority, scheme),
                 ),
               ),
               const SizedBox(width: 12),

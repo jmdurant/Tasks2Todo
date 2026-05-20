@@ -35,11 +35,11 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
   late final GeneratedColumn<String> image = GeneratedColumn<String>(
       'image', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _periorityMeta =
-      const VerificationMeta('periority');
+  static const VerificationMeta _priorityMeta =
+      const VerificationMeta('priority');
   @override
-  late final GeneratedColumn<String> periority = GeneratedColumn<String>(
-      'periority', aliasedName, false,
+  late final GeneratedColumn<String> priority = GeneratedColumn<String>(
+      'priority', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _startTimeMeta =
       const VerificationMeta('startTime');
@@ -91,6 +91,14 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
       type: DriftSqlType.int,
       requiredDuringInsert: false,
       defaultValue: const Constant(-1));
+  static const VerificationMeta _notificationIdMeta =
+      const VerificationMeta('notificationId');
+  @override
+  late final GeneratedColumn<int> notificationId = GeneratedColumn<int>(
+      'notification_id', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
   @override
   List<GeneratedColumn> get $columns => [
         key,
@@ -98,7 +106,7 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
         category,
         description,
         image,
-        periority,
+        priority,
         startTime,
         endTime,
         date,
@@ -106,7 +114,8 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
         status,
         tags,
         recurrence,
-        reminderMinutesBefore
+        reminderMinutesBefore,
+        notificationId
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -150,11 +159,11 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
     } else if (isInserting) {
       context.missing(_imageMeta);
     }
-    if (data.containsKey('periority')) {
-      context.handle(_periorityMeta,
-          periority.isAcceptableOrUnknown(data['periority']!, _periorityMeta));
+    if (data.containsKey('priority')) {
+      context.handle(_priorityMeta,
+          priority.isAcceptableOrUnknown(data['priority']!, _priorityMeta));
     } else if (isInserting) {
-      context.missing(_periorityMeta);
+      context.missing(_priorityMeta);
     }
     if (data.containsKey('start_time')) {
       context.handle(_startTimeMeta,
@@ -202,6 +211,12 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
           reminderMinutesBefore.isAcceptableOrUnknown(
               data['reminder_minutes_before']!, _reminderMinutesBeforeMeta));
     }
+    if (data.containsKey('notification_id')) {
+      context.handle(
+          _notificationIdMeta,
+          notificationId.isAcceptableOrUnknown(
+              data['notification_id']!, _notificationIdMeta));
+    }
     return context;
   }
 
@@ -221,8 +236,8 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
           .read(DriftSqlType.string, data['${effectivePrefix}description'])!,
       image: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}image'])!,
-      periority: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}periority'])!,
+      priority: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}priority'])!,
       startTime: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}start_time'])!,
       endTime: attachedDatabase.typeMapping
@@ -239,6 +254,8 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
           .read(DriftSqlType.string, data['${effectivePrefix}recurrence'])!,
       reminderMinutesBefore: attachedDatabase.typeMapping.read(
           DriftSqlType.int, data['${effectivePrefix}reminder_minutes_before'])!,
+      notificationId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}notification_id'])!,
     );
   }
 
@@ -254,7 +271,7 @@ class Task extends DataClass implements Insertable<Task> {
   final String category;
   final String description;
   final String image;
-  final String periority;
+  final String priority;
   final String startTime;
   final String endTime;
   final String date;
@@ -263,13 +280,14 @@ class Task extends DataClass implements Insertable<Task> {
   final String tags;
   final String recurrence;
   final int reminderMinutesBefore;
+  final int notificationId;
   const Task(
       {required this.key,
       required this.title,
       required this.category,
       required this.description,
       required this.image,
-      required this.periority,
+      required this.priority,
       required this.startTime,
       required this.endTime,
       required this.date,
@@ -277,7 +295,8 @@ class Task extends DataClass implements Insertable<Task> {
       required this.status,
       required this.tags,
       required this.recurrence,
-      required this.reminderMinutesBefore});
+      required this.reminderMinutesBefore,
+      required this.notificationId});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -286,7 +305,7 @@ class Task extends DataClass implements Insertable<Task> {
     map['category'] = Variable<String>(category);
     map['description'] = Variable<String>(description);
     map['image'] = Variable<String>(image);
-    map['periority'] = Variable<String>(periority);
+    map['priority'] = Variable<String>(priority);
     map['start_time'] = Variable<String>(startTime);
     map['end_time'] = Variable<String>(endTime);
     map['date'] = Variable<String>(date);
@@ -295,6 +314,7 @@ class Task extends DataClass implements Insertable<Task> {
     map['tags'] = Variable<String>(tags);
     map['recurrence'] = Variable<String>(recurrence);
     map['reminder_minutes_before'] = Variable<int>(reminderMinutesBefore);
+    map['notification_id'] = Variable<int>(notificationId);
     return map;
   }
 
@@ -305,7 +325,7 @@ class Task extends DataClass implements Insertable<Task> {
       category: Value(category),
       description: Value(description),
       image: Value(image),
-      periority: Value(periority),
+      priority: Value(priority),
       startTime: Value(startTime),
       endTime: Value(endTime),
       date: Value(date),
@@ -314,6 +334,7 @@ class Task extends DataClass implements Insertable<Task> {
       tags: Value(tags),
       recurrence: Value(recurrence),
       reminderMinutesBefore: Value(reminderMinutesBefore),
+      notificationId: Value(notificationId),
     );
   }
 
@@ -326,7 +347,7 @@ class Task extends DataClass implements Insertable<Task> {
       category: serializer.fromJson<String>(json['category']),
       description: serializer.fromJson<String>(json['description']),
       image: serializer.fromJson<String>(json['image']),
-      periority: serializer.fromJson<String>(json['periority']),
+      priority: serializer.fromJson<String>(json['priority']),
       startTime: serializer.fromJson<String>(json['startTime']),
       endTime: serializer.fromJson<String>(json['endTime']),
       date: serializer.fromJson<String>(json['date']),
@@ -336,6 +357,7 @@ class Task extends DataClass implements Insertable<Task> {
       recurrence: serializer.fromJson<String>(json['recurrence']),
       reminderMinutesBefore:
           serializer.fromJson<int>(json['reminderMinutesBefore']),
+      notificationId: serializer.fromJson<int>(json['notificationId']),
     );
   }
   @override
@@ -347,7 +369,7 @@ class Task extends DataClass implements Insertable<Task> {
       'category': serializer.toJson<String>(category),
       'description': serializer.toJson<String>(description),
       'image': serializer.toJson<String>(image),
-      'periority': serializer.toJson<String>(periority),
+      'priority': serializer.toJson<String>(priority),
       'startTime': serializer.toJson<String>(startTime),
       'endTime': serializer.toJson<String>(endTime),
       'date': serializer.toJson<String>(date),
@@ -356,6 +378,7 @@ class Task extends DataClass implements Insertable<Task> {
       'tags': serializer.toJson<String>(tags),
       'recurrence': serializer.toJson<String>(recurrence),
       'reminderMinutesBefore': serializer.toJson<int>(reminderMinutesBefore),
+      'notificationId': serializer.toJson<int>(notificationId),
     };
   }
 
@@ -365,7 +388,7 @@ class Task extends DataClass implements Insertable<Task> {
           String? category,
           String? description,
           String? image,
-          String? periority,
+          String? priority,
           String? startTime,
           String? endTime,
           String? date,
@@ -373,14 +396,15 @@ class Task extends DataClass implements Insertable<Task> {
           String? status,
           String? tags,
           String? recurrence,
-          int? reminderMinutesBefore}) =>
+          int? reminderMinutesBefore,
+          int? notificationId}) =>
       Task(
         key: key ?? this.key,
         title: title ?? this.title,
         category: category ?? this.category,
         description: description ?? this.description,
         image: image ?? this.image,
-        periority: periority ?? this.periority,
+        priority: priority ?? this.priority,
         startTime: startTime ?? this.startTime,
         endTime: endTime ?? this.endTime,
         date: date ?? this.date,
@@ -390,6 +414,7 @@ class Task extends DataClass implements Insertable<Task> {
         recurrence: recurrence ?? this.recurrence,
         reminderMinutesBefore:
             reminderMinutesBefore ?? this.reminderMinutesBefore,
+        notificationId: notificationId ?? this.notificationId,
       );
   Task copyWithCompanion(TasksCompanion data) {
     return Task(
@@ -399,7 +424,7 @@ class Task extends DataClass implements Insertable<Task> {
       description:
           data.description.present ? data.description.value : this.description,
       image: data.image.present ? data.image.value : this.image,
-      periority: data.periority.present ? data.periority.value : this.periority,
+      priority: data.priority.present ? data.priority.value : this.priority,
       startTime: data.startTime.present ? data.startTime.value : this.startTime,
       endTime: data.endTime.present ? data.endTime.value : this.endTime,
       date: data.date.present ? data.date.value : this.date,
@@ -411,6 +436,9 @@ class Task extends DataClass implements Insertable<Task> {
       reminderMinutesBefore: data.reminderMinutesBefore.present
           ? data.reminderMinutesBefore.value
           : this.reminderMinutesBefore,
+      notificationId: data.notificationId.present
+          ? data.notificationId.value
+          : this.notificationId,
     );
   }
 
@@ -422,7 +450,7 @@ class Task extends DataClass implements Insertable<Task> {
           ..write('category: $category, ')
           ..write('description: $description, ')
           ..write('image: $image, ')
-          ..write('periority: $periority, ')
+          ..write('priority: $priority, ')
           ..write('startTime: $startTime, ')
           ..write('endTime: $endTime, ')
           ..write('date: $date, ')
@@ -430,7 +458,8 @@ class Task extends DataClass implements Insertable<Task> {
           ..write('status: $status, ')
           ..write('tags: $tags, ')
           ..write('recurrence: $recurrence, ')
-          ..write('reminderMinutesBefore: $reminderMinutesBefore')
+          ..write('reminderMinutesBefore: $reminderMinutesBefore, ')
+          ..write('notificationId: $notificationId')
           ..write(')'))
         .toString();
   }
@@ -442,7 +471,7 @@ class Task extends DataClass implements Insertable<Task> {
       category,
       description,
       image,
-      periority,
+      priority,
       startTime,
       endTime,
       date,
@@ -450,7 +479,8 @@ class Task extends DataClass implements Insertable<Task> {
       status,
       tags,
       recurrence,
-      reminderMinutesBefore);
+      reminderMinutesBefore,
+      notificationId);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -460,7 +490,7 @@ class Task extends DataClass implements Insertable<Task> {
           other.category == this.category &&
           other.description == this.description &&
           other.image == this.image &&
-          other.periority == this.periority &&
+          other.priority == this.priority &&
           other.startTime == this.startTime &&
           other.endTime == this.endTime &&
           other.date == this.date &&
@@ -468,7 +498,8 @@ class Task extends DataClass implements Insertable<Task> {
           other.status == this.status &&
           other.tags == this.tags &&
           other.recurrence == this.recurrence &&
-          other.reminderMinutesBefore == this.reminderMinutesBefore);
+          other.reminderMinutesBefore == this.reminderMinutesBefore &&
+          other.notificationId == this.notificationId);
 }
 
 class TasksCompanion extends UpdateCompanion<Task> {
@@ -477,7 +508,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
   final Value<String> category;
   final Value<String> description;
   final Value<String> image;
-  final Value<String> periority;
+  final Value<String> priority;
   final Value<String> startTime;
   final Value<String> endTime;
   final Value<String> date;
@@ -486,6 +517,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
   final Value<String> tags;
   final Value<String> recurrence;
   final Value<int> reminderMinutesBefore;
+  final Value<int> notificationId;
   final Value<int> rowid;
   const TasksCompanion({
     this.key = const Value.absent(),
@@ -493,7 +525,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     this.category = const Value.absent(),
     this.description = const Value.absent(),
     this.image = const Value.absent(),
-    this.periority = const Value.absent(),
+    this.priority = const Value.absent(),
     this.startTime = const Value.absent(),
     this.endTime = const Value.absent(),
     this.date = const Value.absent(),
@@ -502,6 +534,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     this.tags = const Value.absent(),
     this.recurrence = const Value.absent(),
     this.reminderMinutesBefore = const Value.absent(),
+    this.notificationId = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   TasksCompanion.insert({
@@ -510,7 +543,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     required String category,
     required String description,
     required String image,
-    required String periority,
+    required String priority,
     required String startTime,
     required String endTime,
     required String date,
@@ -519,13 +552,14 @@ class TasksCompanion extends UpdateCompanion<Task> {
     this.tags = const Value.absent(),
     this.recurrence = const Value.absent(),
     this.reminderMinutesBefore = const Value.absent(),
+    this.notificationId = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : key = Value(key),
         title = Value(title),
         category = Value(category),
         description = Value(description),
         image = Value(image),
-        periority = Value(periority),
+        priority = Value(priority),
         startTime = Value(startTime),
         endTime = Value(endTime),
         date = Value(date),
@@ -537,7 +571,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     Expression<String>? category,
     Expression<String>? description,
     Expression<String>? image,
-    Expression<String>? periority,
+    Expression<String>? priority,
     Expression<String>? startTime,
     Expression<String>? endTime,
     Expression<String>? date,
@@ -546,6 +580,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     Expression<String>? tags,
     Expression<String>? recurrence,
     Expression<int>? reminderMinutesBefore,
+    Expression<int>? notificationId,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -554,7 +589,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
       if (category != null) 'category': category,
       if (description != null) 'description': description,
       if (image != null) 'image': image,
-      if (periority != null) 'periority': periority,
+      if (priority != null) 'priority': priority,
       if (startTime != null) 'start_time': startTime,
       if (endTime != null) 'end_time': endTime,
       if (date != null) 'date': date,
@@ -564,6 +599,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
       if (recurrence != null) 'recurrence': recurrence,
       if (reminderMinutesBefore != null)
         'reminder_minutes_before': reminderMinutesBefore,
+      if (notificationId != null) 'notification_id': notificationId,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -574,7 +610,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
       Value<String>? category,
       Value<String>? description,
       Value<String>? image,
-      Value<String>? periority,
+      Value<String>? priority,
       Value<String>? startTime,
       Value<String>? endTime,
       Value<String>? date,
@@ -583,6 +619,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
       Value<String>? tags,
       Value<String>? recurrence,
       Value<int>? reminderMinutesBefore,
+      Value<int>? notificationId,
       Value<int>? rowid}) {
     return TasksCompanion(
       key: key ?? this.key,
@@ -590,7 +627,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
       category: category ?? this.category,
       description: description ?? this.description,
       image: image ?? this.image,
-      periority: periority ?? this.periority,
+      priority: priority ?? this.priority,
       startTime: startTime ?? this.startTime,
       endTime: endTime ?? this.endTime,
       date: date ?? this.date,
@@ -600,6 +637,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
       recurrence: recurrence ?? this.recurrence,
       reminderMinutesBefore:
           reminderMinutesBefore ?? this.reminderMinutesBefore,
+      notificationId: notificationId ?? this.notificationId,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -622,8 +660,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
     if (image.present) {
       map['image'] = Variable<String>(image.value);
     }
-    if (periority.present) {
-      map['periority'] = Variable<String>(periority.value);
+    if (priority.present) {
+      map['priority'] = Variable<String>(priority.value);
     }
     if (startTime.present) {
       map['start_time'] = Variable<String>(startTime.value);
@@ -650,6 +688,9 @@ class TasksCompanion extends UpdateCompanion<Task> {
       map['reminder_minutes_before'] =
           Variable<int>(reminderMinutesBefore.value);
     }
+    if (notificationId.present) {
+      map['notification_id'] = Variable<int>(notificationId.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -664,7 +705,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
           ..write('category: $category, ')
           ..write('description: $description, ')
           ..write('image: $image, ')
-          ..write('periority: $periority, ')
+          ..write('priority: $priority, ')
           ..write('startTime: $startTime, ')
           ..write('endTime: $endTime, ')
           ..write('date: $date, ')
@@ -673,6 +714,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
           ..write('tags: $tags, ')
           ..write('recurrence: $recurrence, ')
           ..write('reminderMinutesBefore: $reminderMinutesBefore, ')
+          ..write('notificationId: $notificationId, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2038,7 +2080,7 @@ typedef $$TasksTableCreateCompanionBuilder = TasksCompanion Function({
   required String category,
   required String description,
   required String image,
-  required String periority,
+  required String priority,
   required String startTime,
   required String endTime,
   required String date,
@@ -2047,6 +2089,7 @@ typedef $$TasksTableCreateCompanionBuilder = TasksCompanion Function({
   Value<String> tags,
   Value<String> recurrence,
   Value<int> reminderMinutesBefore,
+  Value<int> notificationId,
   Value<int> rowid,
 });
 typedef $$TasksTableUpdateCompanionBuilder = TasksCompanion Function({
@@ -2055,7 +2098,7 @@ typedef $$TasksTableUpdateCompanionBuilder = TasksCompanion Function({
   Value<String> category,
   Value<String> description,
   Value<String> image,
-  Value<String> periority,
+  Value<String> priority,
   Value<String> startTime,
   Value<String> endTime,
   Value<String> date,
@@ -2064,6 +2107,7 @@ typedef $$TasksTableUpdateCompanionBuilder = TasksCompanion Function({
   Value<String> tags,
   Value<String> recurrence,
   Value<int> reminderMinutesBefore,
+  Value<int> notificationId,
   Value<int> rowid,
 });
 
@@ -2090,8 +2134,8 @@ class $$TasksTableFilterComposer extends Composer<_$AppDatabase, $TasksTable> {
   ColumnFilters<String> get image => $composableBuilder(
       column: $table.image, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get periority => $composableBuilder(
-      column: $table.periority, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get priority => $composableBuilder(
+      column: $table.priority, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get startTime => $composableBuilder(
       column: $table.startTime, builder: (column) => ColumnFilters(column));
@@ -2116,6 +2160,10 @@ class $$TasksTableFilterComposer extends Composer<_$AppDatabase, $TasksTable> {
 
   ColumnFilters<int> get reminderMinutesBefore => $composableBuilder(
       column: $table.reminderMinutesBefore,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get notificationId => $composableBuilder(
+      column: $table.notificationId,
       builder: (column) => ColumnFilters(column));
 }
 
@@ -2143,8 +2191,8 @@ class $$TasksTableOrderingComposer
   ColumnOrderings<String> get image => $composableBuilder(
       column: $table.image, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get periority => $composableBuilder(
-      column: $table.periority, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get priority => $composableBuilder(
+      column: $table.priority, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get startTime => $composableBuilder(
       column: $table.startTime, builder: (column) => ColumnOrderings(column));
@@ -2169,6 +2217,10 @@ class $$TasksTableOrderingComposer
 
   ColumnOrderings<int> get reminderMinutesBefore => $composableBuilder(
       column: $table.reminderMinutesBefore,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get notificationId => $composableBuilder(
+      column: $table.notificationId,
       builder: (column) => ColumnOrderings(column));
 }
 
@@ -2196,8 +2248,8 @@ class $$TasksTableAnnotationComposer
   GeneratedColumn<String> get image =>
       $composableBuilder(column: $table.image, builder: (column) => column);
 
-  GeneratedColumn<String> get periority =>
-      $composableBuilder(column: $table.periority, builder: (column) => column);
+  GeneratedColumn<String> get priority =>
+      $composableBuilder(column: $table.priority, builder: (column) => column);
 
   GeneratedColumn<String> get startTime =>
       $composableBuilder(column: $table.startTime, builder: (column) => column);
@@ -2222,6 +2274,9 @@ class $$TasksTableAnnotationComposer
 
   GeneratedColumn<int> get reminderMinutesBefore => $composableBuilder(
       column: $table.reminderMinutesBefore, builder: (column) => column);
+
+  GeneratedColumn<int> get notificationId => $composableBuilder(
+      column: $table.notificationId, builder: (column) => column);
 }
 
 class $$TasksTableTableManager extends RootTableManager<
@@ -2252,7 +2307,7 @@ class $$TasksTableTableManager extends RootTableManager<
             Value<String> category = const Value.absent(),
             Value<String> description = const Value.absent(),
             Value<String> image = const Value.absent(),
-            Value<String> periority = const Value.absent(),
+            Value<String> priority = const Value.absent(),
             Value<String> startTime = const Value.absent(),
             Value<String> endTime = const Value.absent(),
             Value<String> date = const Value.absent(),
@@ -2261,6 +2316,7 @@ class $$TasksTableTableManager extends RootTableManager<
             Value<String> tags = const Value.absent(),
             Value<String> recurrence = const Value.absent(),
             Value<int> reminderMinutesBefore = const Value.absent(),
+            Value<int> notificationId = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               TasksCompanion(
@@ -2269,7 +2325,7 @@ class $$TasksTableTableManager extends RootTableManager<
             category: category,
             description: description,
             image: image,
-            periority: periority,
+            priority: priority,
             startTime: startTime,
             endTime: endTime,
             date: date,
@@ -2278,6 +2334,7 @@ class $$TasksTableTableManager extends RootTableManager<
             tags: tags,
             recurrence: recurrence,
             reminderMinutesBefore: reminderMinutesBefore,
+            notificationId: notificationId,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -2286,7 +2343,7 @@ class $$TasksTableTableManager extends RootTableManager<
             required String category,
             required String description,
             required String image,
-            required String periority,
+            required String priority,
             required String startTime,
             required String endTime,
             required String date,
@@ -2295,6 +2352,7 @@ class $$TasksTableTableManager extends RootTableManager<
             Value<String> tags = const Value.absent(),
             Value<String> recurrence = const Value.absent(),
             Value<int> reminderMinutesBefore = const Value.absent(),
+            Value<int> notificationId = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               TasksCompanion.insert(
@@ -2303,7 +2361,7 @@ class $$TasksTableTableManager extends RootTableManager<
             category: category,
             description: description,
             image: image,
-            periority: periority,
+            priority: priority,
             startTime: startTime,
             endTime: endTime,
             date: date,
@@ -2312,6 +2370,7 @@ class $$TasksTableTableManager extends RootTableManager<
             tags: tags,
             recurrence: recurrence,
             reminderMinutesBefore: reminderMinutesBefore,
+            notificationId: notificationId,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
@@ -3186,14 +3245,53 @@ class $AppDatabaseManager {
 
 mixin _$TaskDaoMixin on DatabaseAccessor<AppDatabase> {
   $TasksTable get tasks => attachedDatabase.tasks;
+  TaskDaoManager get managers => TaskDaoManager(this);
 }
+
+class TaskDaoManager {
+  final _$TaskDaoMixin _db;
+  TaskDaoManager(this._db);
+  $$TasksTableTableManager get tasks =>
+      $$TasksTableTableManager(_db.attachedDatabase, _db.tasks);
+}
+
 mixin _$CaptureSessionDaoMixin on DatabaseAccessor<AppDatabase> {
   $CaptureSessionsTable get captureSessions => attachedDatabase.captureSessions;
+  CaptureSessionDaoManager get managers => CaptureSessionDaoManager(this);
 }
+
+class CaptureSessionDaoManager {
+  final _$CaptureSessionDaoMixin _db;
+  CaptureSessionDaoManager(this._db);
+  $$CaptureSessionsTableTableManager get captureSessions =>
+      $$CaptureSessionsTableTableManager(
+          _db.attachedDatabase, _db.captureSessions);
+}
+
 mixin _$ParsedItemDaoMixin on DatabaseAccessor<AppDatabase> {
   $CaptureSessionsTable get captureSessions => attachedDatabase.captureSessions;
   $ParsedItemsTable get parsedItems => attachedDatabase.parsedItems;
+  ParsedItemDaoManager get managers => ParsedItemDaoManager(this);
 }
+
+class ParsedItemDaoManager {
+  final _$ParsedItemDaoMixin _db;
+  ParsedItemDaoManager(this._db);
+  $$CaptureSessionsTableTableManager get captureSessions =>
+      $$CaptureSessionsTableTableManager(
+          _db.attachedDatabase, _db.captureSessions);
+  $$ParsedItemsTableTableManager get parsedItems =>
+      $$ParsedItemsTableTableManager(_db.attachedDatabase, _db.parsedItems);
+}
+
 mixin _$ProjectDaoMixin on DatabaseAccessor<AppDatabase> {
   $ProjectsTable get projects => attachedDatabase.projects;
+  ProjectDaoManager get managers => ProjectDaoManager(this);
+}
+
+class ProjectDaoManager {
+  final _$ProjectDaoMixin _db;
+  ProjectDaoManager(this._db);
+  $$ProjectsTableTableManager get projects =>
+      $$ProjectsTableTableManager(_db.attachedDatabase, _db.projects);
 }

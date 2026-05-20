@@ -26,6 +26,11 @@ class DbHelper {
     return model;
   }
 
+  Future<void> insertAll(List<TaskModel> models) async {
+    if (models.isEmpty) return;
+    await _taskDao.insertAllTasks(models);
+  }
+
   Future<int> deleteTask(String id) async {
     return _taskDao.deleteTask(id);
   }

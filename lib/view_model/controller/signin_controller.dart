@@ -5,8 +5,6 @@ import '../../data/local/local_auth_service.dart';
 import '../../data/network/firebase/firebase_services.dart';
 import '../../util/utils.dart';
 import '../../view/home/home.dart';
-import 'home_controller.dart';
-import 'new_task_controller.dart';
 import 'settings_controller.dart';
 
 
@@ -84,9 +82,6 @@ class SignInController extends GetxController{
           Icons.done,
           color: Colors.white,
         ));
-    // Register controllers before navigating to HomePage
-    Get.put(HomeController());
-    Get.put(NewTaskController());
     Get.off(() => HomePage());
   }
 }

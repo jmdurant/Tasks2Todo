@@ -64,7 +64,7 @@ class TaskDetailContainer extends StatelessWidget {
 
     // Delete from DB and cancel reminder
     controller.db.deleteTask(task.key!);
-    NotificationService.instance.cancelTaskReminder(task.key!);
+    NotificationService.instance.cancelTaskReminder(task);
 
     // Show undo snackbar
     Get.showSnackbar(
