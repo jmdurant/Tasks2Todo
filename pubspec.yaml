@@ -59,6 +59,9 @@ dependencies:
   timezone: ^0.10.0
   crypto: ^3.0.6
 
+  # Receive shared text from other apps (e.g. paper2todo DSL payloads)
+  share_handler: ^0.0.19
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -2,8 +2,12 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:share_handler/share_handler.dart';
 import 'package:todo/config/app_config.dart';
+import 'package:todo/db_helper/db_helper.dart';
 import 'package:todo/theme/app_theme.dart';
+import 'package:todo/util/task_parser.dart';
+import 'package:todo/util/utils.dart';
 import 'package:todo/view/home/home.dart';
 import 'package:todo/view/splash/splash_screen.dart';
 import 'package:todo/view_model/controller/home_controller.dart';
@@ -30,7 +34,55 @@ Future<void> main() async {
   await NotificationService.instance.requestPermission();
   NotificationService.instance.rescheduleAllReminders();
 
+  _initShareReceiver();
+
   runApp(const MyApp());
+}
+
+/// Listens for incoming share intents containing text — typically the DSL
+/// payload from Paper2Todo. Parses with [TaskParser] and bulk-inserts into
+/// the Tasks table, then refreshes the home view.
+void _initShareReceiver() {
+  final handler = ShareHandlerPlatform.instance;
+
+  handler.sharedMediaStream.listen((SharedMedia media) {
+    _processIncomingShare(media);
+  });
+
+  handler.getInitialSharedMedia().then((SharedMedia? media) {
+    if (media == null) return;
+    // Delay slightly so MyApp has mounted and Get.context is available for
+    // the success snackbar.
+    Future.delayed(const Duration(milliseconds: 500), () {
+      _processIncomingShare(media);
+    });
+  });
+}
+
+Future<void> _processIncomingShare(SharedMedia media) async {
+  final String? raw = media.content;
+  if (raw == null || raw.trim().isEmpty) return;
+
+  final parsed = TaskParser.parseQuickEntry(raw);
+  if (parsed.isEmpty) return;
+
+  final models = TaskParser.convertToTaskModels(parsed);
+  await DbHelper().insertAll(models);
+
+  // Trigger the week view to re-query so newly-dated tasks show immediately.
+  try {
+    Get.find<HomeController>().getTasks();
+  } catch (_) {
+    // HomeController may not be registered yet on a cold-start share — the
+    // initial getTasks() in its onInit will pick everything up.
+  }
+
+  final count = models.length;
+  Utils.showSnackBar(
+    'Imported',
+    'Added $count task${count == 1 ? '' : 's'} from Paper2Todo',
+    const Icon(Icons.move_to_inbox, color: Colors.white),
+  );
 }
 
 class MyApp extends StatelessWidget {
