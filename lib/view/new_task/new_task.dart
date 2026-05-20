@@ -17,17 +17,23 @@ class NewTask extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme scheme = Theme.of(context).colorScheme;
+    final Size screen = MediaQuery.sizeOf(context);
+    // Use ~88% of the screen height so the date/time row is visible without
+    // scrolling on phones, while leaving a peek of the underlying content.
+    // Cap at 760 so the form doesn't get cartoonishly tall on a desktop.
+    final double sheetHeight =
+        (screen.height * 0.88).clamp(560.0, 760.0).toDouble();
     return ClipRRect(
       borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(30),
           topRight: Radius.circular(30)),
       child: Container(
-          height: 650,
+          height: sheetHeight,
           width: Responsive.isLargeTablet(context)
-              ? MediaQuery.sizeOf(context).width / 2.5
+              ? screen.width / 2.5
               : Responsive.isTablet(context)
-                  ? MediaQuery.sizeOf(context).width / 1.6
-                  : MediaQuery.sizeOf(context).width,
+                  ? screen.width / 1.6
+                  : screen.width,
           decoration: BoxDecoration(
             color: scheme.surface,
           ),

@@ -265,6 +265,19 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
     return grouped;
   }
 
+  /// Reactive version of [getAllTasksGroupedByProject]. Emits a fresh map
+  /// whenever any task row changes, so views can rebuild without manually
+  /// refreshing.
+  Stream<Map<String, List<TaskModel>>> watchAllTasksGroupedByProject() {
+    return select(tasks).watch().map((rows) {
+      final Map<String, List<TaskModel>> grouped = {};
+      for (final row in rows) {
+        (grouped[row.category] ??= []).add(_rowToModel(row));
+      }
+      return grouped;
+    });
+  }
+
   /// Count tasks for a specific project/category
   Future<int> countTasksForProject(String projectName) async {
     final query = selectOnly(tasks)

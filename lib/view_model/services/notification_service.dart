@@ -103,12 +103,13 @@ class NotificationService {
     return ((parsed ?? task.key.hashCode) & 0x7FFFFFFF);
   }
 
-  /// Cancel all reminders and reschedule from the database
+  /// Cancel all reminders and reschedule from the database. Wraps everything
+  /// in try/catch because some platforms (notably web) don't have a working
+  /// local-notifications backend and will throw on `cancelAll`/`schedule`.
   Future<void> rescheduleAllReminders() async {
-    if (!_initialized) await initialize();
-    await _plugin.cancelAll();
-
     try {
+      if (!_initialized) await initialize();
+      await _plugin.cancelAll();
       final db = DbHelper();
       final tasks = await db.getTasksWithReminders();
       for (final task in tasks) {
@@ -116,7 +117,7 @@ class NotificationService {
       }
       debugPrint('NotificationService: scheduled ${tasks.length} reminders');
     } catch (e) {
-      debugPrint('NotificationService: error rescheduling: $e');
+      debugPrint('NotificationService: reschedule skipped: $e');
     }
   }
 

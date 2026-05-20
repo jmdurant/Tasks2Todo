@@ -132,20 +132,13 @@ class NewTaskController extends GetxController {
       );
       return;
     }
-    // Default to today if no date selected
-    if (selectedDate.isEmpty) {
-      final now = DateTime.now();
-      pickedDate = now;
-      selectedDate.value =
-          '${Utils.addPrefix(now.day.toString())}/${Utils.addPrefix(now.month.toString())}/${now.year}';
-    }
     loading.value = true;
 
     final newTask = TaskModel(
         key: DateTime.now().microsecondsSinceEpoch.toString(),
         startTime: startTime.value,
         endTime: endTime.value,
-        date: selectedDate.value,
+        date: selectedDate.value, // may be '' for "no date" tasks
         priority: selectedPriority.value,
         description: description.value.text.toString(),
         category: category.value.text.toString(),
@@ -159,16 +152,22 @@ class NewTaskController extends GetxController {
     );
 
     db.insert(newTask).then((value) {
-      // Schedule reminder if set
       if (value.hasReminder) {
         NotificationService.instance.scheduleTaskReminder(value);
       }
 
-      Duration dif = pickedDate!.difference(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day));
-      if (dif.inDays >= 0 && dif.inDays < 7) {
-        final updatedDay = List<TaskModel>.from(homeController.list[dif.inDays]);
-        updatedDay.add(value);
-        homeController.list[dif.inDays] = updatedDay;
+      // Only place the task in the current week view if a date was picked
+      // *and* it falls in the visible 7-day window. No-date tasks live only
+      // in Projects/Inbox.
+      if (pickedDate != null) {
+        final today = DateTime(
+            DateTime.now().year, DateTime.now().month, DateTime.now().day);
+        final dif = pickedDate!.difference(today).inDays;
+        if (dif >= 0 && dif < 7) {
+          final updatedDay = List<TaskModel>.from(homeController.list[dif]);
+          updatedDay.add(value);
+          homeController.list[dif] = updatedDay;
+        }
       }
       loading.value = false;
       Get.back();

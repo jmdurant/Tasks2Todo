@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:io' show Platform;
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:todo/data/local/database/app_database.dart';
@@ -6,6 +10,11 @@ import 'package:todo/model/task_model.dart';
 import 'package:todo/util/utils.dart';
 import '../../view_model/controller/home_controller.dart';
 import 'task_detail_view.dart';
+
+bool _usesMouse() {
+  if (kIsWeb) return true;
+  return Platform.isWindows || Platform.isMacOS || Platform.isLinux;
+}
 
 class ProjectsView extends StatefulWidget {
   const ProjectsView({super.key});
@@ -21,29 +30,43 @@ class _ProjectsViewState extends State<ProjectsView> {
   // Track which projects are expanded
   final Set<String> _expandedProjects = {};
 
-  // Cache of tasks per project
+  // Cache of tasks per project, kept fresh by a Drift stream.
   final Map<String, List<TaskModel>> _tasksByProject = {};
 
-  bool _isLoading = false;
+  bool _isLoading = true;
+  StreamSubscription<Map<String, List<TaskModel>>>? _tasksSub;
 
   @override
   void initState() {
     super.initState();
-    _loadAllProjectTasks();
+    _tasksSub = _db.watchAllTasksGroupedByProject().listen(
+      (grouped) {
+        if (!mounted) return;
+        setState(() {
+          _tasksByProject
+            ..clear()
+            ..addAll(grouped);
+          _tasksByProject.putIfAbsent('Inbox', () => []);
+          _isLoading = false;
+        });
+      },
+      onError: (Object e, StackTrace st) {
+        debugPrint('ProjectsView: task stream error: $e\n$st');
+        if (!mounted) return;
+        setState(() {
+          _tasksByProject
+            ..clear()
+            ..putIfAbsent('Inbox', () => []);
+          _isLoading = false;
+        });
+      },
+    );
   }
 
-  Future<void> _loadAllProjectTasks() async {
-    setState(() => _isLoading = true);
-
-    // Single query to load all tasks, grouped by project
-    final grouped = await _db.getAllTasksGroupedByProject();
-    _tasksByProject
-      ..clear()
-      ..addAll(grouped);
-    // Ensure Inbox always exists even if empty
-    _tasksByProject.putIfAbsent('Inbox', () => []);
-
-    setState(() => _isLoading = false);
+  @override
+  void dispose() {
+    _tasksSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _moveTaskToProject(TaskModel task, String newProjectName) async {
@@ -298,42 +321,57 @@ class _ProjectsViewState extends State<ProjectsView> {
   Widget _buildDraggableTask(BuildContext context, TaskModel task, Color projectColor) {
     final ColorScheme scheme = Theme.of(context).colorScheme;
 
-    return LongPressDraggable<TaskModel>(
-      data: task,
-      feedback: Material(
-        elevation: 8,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          width: 280,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: scheme.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: projectColor, width: 2),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.drag_indicator, color: scheme.onSurfaceVariant, size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  task.title ?? 'Untitled',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                  overflow: TextOverflow.ellipsis,
-                ),
+    final feedback = Material(
+      elevation: 8,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 280,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: scheme.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: projectColor, width: 2),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.drag_indicator, color: scheme.onSurfaceVariant, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                task.title ?? 'Untitled',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                overflow: TextOverflow.ellipsis,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
-      childWhenDragging: Opacity(
-        opacity: 0.4,
-        child: _buildTaskRow(context, task, projectColor),
-      ),
+    );
+    final childWhenDragging = Opacity(
+      opacity: 0.4,
       child: _buildTaskRow(context, task, projectColor),
+    );
+    final row = _buildTaskRow(context, task, projectColor);
+
+    // On mouse platforms (web/desktop), use immediate Draggable — a long-press
+    // feels wrong with a mouse and most users won't hold long enough. On
+    // touch platforms keep LongPressDraggable so scroll gestures still work.
+    if (_usesMouse()) {
+      return Draggable<TaskModel>(
+        data: task,
+        feedback: feedback,
+        childWhenDragging: childWhenDragging,
+        child: row,
+      );
+    }
+    return LongPressDraggable<TaskModel>(
+      data: task,
+      feedback: feedback,
+      childWhenDragging: childWhenDragging,
+      child: row,
     );
   }
 
@@ -344,7 +382,7 @@ class _ProjectsViewState extends State<ProjectsView> {
     return InkWell(
       onTap: () async {
         await Get.to(() => TaskDetailView(task: task));
-        _loadAllProjectTasks(); // Refresh after returning
+        // Stream watcher refreshes _tasksByProject automatically.
       },
       borderRadius: BorderRadius.circular(8),
       child: Container(
@@ -436,9 +474,7 @@ class _ProjectsViewState extends State<ProjectsView> {
   Future<void> _toggleTaskComplete(TaskModel task) async {
     final newStatus = task.status == 'complete' ? 'unComplete' : 'complete';
     await _db.updateTaskStatus(task.key!, newStatus);
-
-    // Reload from DB to get fresh immutable state
-    await _loadAllProjectTasks();
+    // Stream watcher repopulates _tasksByProject; refresh the home week view.
     controller.getTasks();
   }
 
@@ -598,7 +634,6 @@ class _ProjectsViewState extends State<ProjectsView> {
                   );
                   if (!ctx.mounted) return;
                   Navigator.of(ctx).pop();
-                  _loadAllProjectTasks(); // Refresh task lists
                   Get.snackbar(
                     'Project added',
                     '"$name" is ready for tasks.',
@@ -629,7 +664,6 @@ class _ProjectsViewState extends State<ProjectsView> {
             onPressed: () async {
               await controller.deleteProject(project.id);
               Get.back();
-              _loadAllProjectTasks(); // Refresh
               Get.snackbar(
                 'Project removed',
                 '"${project.name}" was deleted.',

@@ -55,6 +55,10 @@ class DbHelper {
     return _taskDao.getAllTasksGroupedByProject();
   }
 
+  Stream<Map<String, List<TaskModel>>> watchAllTasksGroupedByProject() {
+    return _taskDao.watchAllTasksGroupedByProject();
+  }
+
   Future<int> countTasksForProject(String projectName) {
     return _taskDao.countTasksForProject(projectName);
   }
