@@ -1,3 +1,7 @@
+import 'dart:convert';
+import 'dart:io' show GZipCodec;
+
+import 'package:app_links/app_links.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -36,6 +40,7 @@ Future<void> main() async {
   NotificationService.instance.rescheduleAllReminders();
 
   _initShareReceiver();
+  _initDeepLinkReceiver();
 
   runApp(const MyApp());
 }
@@ -58,6 +63,85 @@ void _initShareReceiver() {
       _processIncomingShare(media);
     });
   });
+}
+
+/// Listens for `tasks2todo://` deep-link launches — the direct, no-share-sheet
+/// route paper2todo can use as a one-tap "Open in Tasks2Todo" button after
+/// processing.
+///
+/// URL format: `tasks2todo://import?data=<base64url(gzip(jsonBytes))>`. The
+/// gzip + base64 keeps the URL well under the ~8KB practical limit for
+/// realistic capture sessions; oversized captures should fall back to share.
+void _initDeepLinkReceiver() {
+  final appLinks = AppLinks();
+
+  appLinks.uriLinkStream.listen(_processIncomingUri,
+      onError: (Object e) => debugPrint('AppLinks stream error: $e'));
+
+  appLinks.getInitialLink().then((Uri? uri) {
+    if (uri == null) return;
+    Future.delayed(const Duration(milliseconds: 500), () {
+      _processIncomingUri(uri);
+    });
+  });
+}
+
+Future<void> _processIncomingUri(Uri uri) async {
+  if (uri.scheme != 'tasks2todo') return;
+  if (uri.host != 'import' && uri.path != '/import' && uri.path != 'import') {
+    debugPrint('Deep link: unknown path ${uri.host}${uri.path}');
+    return;
+  }
+  final String? data = uri.queryParameters['data'];
+  if (data == null || data.isEmpty) {
+    debugPrint('Deep link: missing data param');
+    return;
+  }
+  try {
+    // base64url-decode → gunzip → utf8 → re-prefix with sentinel so the
+    // existing payload decoder can do the rest.
+    final compressed = base64Url.decode(_padBase64(data));
+    final jsonBytes = GZipCodec().decode(compressed);
+    final jsonStr = utf8.decode(jsonBytes);
+    await _ingestPaper2TodoJson(jsonStr);
+  } catch (e) {
+    debugPrint('Deep link: failed to decode payload: $e');
+    Utils.showSnackBar(
+      'Open failed',
+      'Could not read the Tasks2Todo link: $e',
+      const Icon(Icons.error_outline, color: Colors.white),
+    );
+  }
+}
+
+/// base64Url.decode requires correct padding; URL-safe base64 in real-world
+/// use often strips it. Re-add `=` padding so decoding succeeds.
+String _padBase64(String s) {
+  final mod = s.length % 4;
+  if (mod == 0) return s;
+  return s + ('=' * (4 - mod));
+}
+
+/// Decodes a raw paper2todo JSON body (no sentinel), persists it, and
+/// navigates to the Inbox. Shared by the deep-link and share-text paths.
+Future<void> _ingestPaper2TodoJson(String jsonBody) async {
+  final wrapped = '${Paper2TodoPayload.sentinel}\n$jsonBody';
+  final payload = Paper2TodoPayload.tryDecode(wrapped);
+  if (payload == null) {
+    debugPrint('paper2todo: payload decode returned null');
+    return;
+  }
+  await DbHelper().insertPaper2TodoCapture(payload);
+  try {
+    final home = Get.find<HomeController>();
+    home.barIndex.value = 0;
+    home.quickEntryMode.value = 2;
+  } catch (_) {}
+  Utils.showSnackBar(
+    'Captured',
+    'Got ${payload.items.length} item${payload.items.length == 1 ? '' : 's'} from Paper2Todo',
+    const Icon(Icons.move_to_inbox, color: Colors.white),
+  );
 }
 
 Future<void> _processIncomingShare(SharedMedia media) async {

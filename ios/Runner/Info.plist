@@ -47,5 +47,21 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- Register the tasks2todo:// URL scheme for paper2todo's direct-launch
+	     "Open in Tasks2Todo" button. The role is "Editor" because the app
+	     consumes and acts on the payload rather than just viewing it. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.tasks2todo.import</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>tasks2todo</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

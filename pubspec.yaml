@@ -62,6 +62,10 @@ dependencies:
   # Receive shared text from other apps (e.g. paper2todo DSL payloads)
   share_handler: ^0.0.19
 
+  # Receive deep-link launches (tasks2todo:// scheme for paper2todo's
+  # "Open in Tasks2Todo" direct-launch button).
+  app_links: ^6.3.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
