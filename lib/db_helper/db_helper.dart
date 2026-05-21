@@ -113,6 +113,16 @@ class DbHelper {
     return _taskDao.applyRemoteTask(remote);
   }
 
+  /// Reactive all-rows stream (incl. tombstones) for the live-sync push.
+  Stream<List<TaskModel>> watchAllTasksForSync() {
+    return _taskDao.watchAllTasksForSync();
+  }
+
+  /// GC tombstones older than [cutoffMillis].
+  Future<int> pruneTombstones(int cutoffMillis) {
+    return _taskDao.pruneTombstones(cutoffMillis);
+  }
+
   // ─── Paper2Todo Inbox ──────────────────────────────────────────────────
 
   /// Persist a paper2todo capture payload into the local CaptureSessions /

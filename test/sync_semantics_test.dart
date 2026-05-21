@@ -130,4 +130,26 @@ void main() {
       expect(all.single.title, 'first');
     });
   });
+
+  group('tombstone GC', () {
+    test('prunes only deleted rows older than the cutoff', () async {
+      // Live row, old timestamp — must survive.
+      await dao.applyRemoteTask(
+          makeTask(key: 'live', updatedAt: 1000, deleted: false));
+      // Old tombstone — must be pruned.
+      await dao.applyRemoteTask(
+          makeTask(key: 'old-dead', updatedAt: 1000, deleted: true));
+      // Recent tombstone — must survive (other devices may not have seen it).
+      await dao.applyRemoteTask(
+          makeTask(key: 'fresh-dead', updatedAt: 9000, deleted: true));
+
+      final removed = await dao.pruneTombstones(5000);
+      expect(removed, 1);
+
+      final remaining = await dao.getAllTasksForSync();
+      final keys = remaining.map((t) => t.key).toSet();
+      expect(keys, containsAll(['live', 'fresh-dead']));
+      expect(keys, isNot(contains('old-dead')));
+    });
+  });
 }

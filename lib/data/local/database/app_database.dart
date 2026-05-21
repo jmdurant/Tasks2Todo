@@ -269,6 +269,25 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
     return rows.map(_rowToModel).toList();
   }
 
+  /// Reactive version of [getAllTasksForSync] — emits all rows (incl.
+  /// tombstones) on any change, so the live-sync push can react to local
+  /// edits and deletes.
+  Stream<List<TaskModel>> watchAllTasksForSync() {
+    return select(tasks).watch().map((rows) => rows.map(_rowToModel).toList());
+  }
+
+  /// Hard-deletes tombstones older than [cutoffMillis] (epoch). Run
+  /// periodically so deleted rows don't accumulate forever. The cutoff should
+  /// be generous (e.g. 30 days) so every device has had a chance to see the
+  /// tombstone before it's GC'd.
+  Future<int> pruneTombstones(int cutoffMillis) {
+    return (delete(tasks)
+          ..where((t) =>
+              t.deleted.equals(true) &
+              t.updatedAt.isSmallerThanValue(cutoffMillis)))
+        .go();
+  }
+
   /// Derives a deterministic 31-bit notification id from the task key.
   /// Keys created by the app are `microsecondsSinceEpoch.toString()`, so this
   /// is essentially the low 31 bits of the creation time — stable across

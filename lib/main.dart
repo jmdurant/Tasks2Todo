@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io' show GZipCodec;
 
 import 'package:app_links/app_links.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -19,6 +20,7 @@ import 'package:todo/view_model/controller/home_controller.dart';
 import 'package:todo/view_model/controller/new_task_controller.dart';
 import 'package:todo/view_model/controller/settings_controller.dart';
 import 'package:todo/view_model/services/notification_service.dart';
+import 'package:todo/view_model/services/sync_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,8 +43,30 @@ Future<void> main() async {
 
   _initShareReceiver();
   _initDeepLinkReceiver();
+  _initSyncLifecycle(settingsController);
 
   runApp(const MyApp());
+}
+
+/// Starts/stops Firebase live sync whenever the auth state or the cloud-mode
+/// toggle changes. Sync runs only when Firebase is compiled in, the user is
+/// signed in, and cloud mode is on.
+void _initSyncLifecycle(SettingsController settings) {
+  if (!AppConfig.firebaseAvailable) return;
+
+  void evaluate() {
+    final signedIn = FirebaseAuth.instance.currentUser != null;
+    if (signedIn && !settings.useLocalOnly.value) {
+      SyncService.instance.startLiveSync();
+    } else {
+      SyncService.instance.stopLiveSync();
+    }
+  }
+
+  // React to login/logout (also fires once on startup with the restored
+  // session) and to the user flipping the cloud-sync toggle.
+  FirebaseAuth.instance.authStateChanges().listen((_) => evaluate());
+  ever(settings.useLocalOnly, (_) => evaluate());
 }
 
 /// Listens for incoming share intents containing text — typically the DSL
