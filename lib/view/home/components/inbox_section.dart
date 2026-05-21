@@ -1,6 +1,9 @@
+import 'dart:collection';
+
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:todo/data/local/database/app_database.dart' as drift_db;
 import 'package:todo/db_helper/db_helper.dart';
 import 'package:todo/model/task_model.dart';
@@ -20,28 +23,47 @@ class InboxSection extends StatelessWidget {
     final ColorScheme scheme = Theme.of(context).colorScheme;
     final DbHelper db = DbHelper();
 
-    return StreamBuilder<List<drift_db.ParsedItem>>(
+    return StreamBuilder<List<({drift_db.CaptureSession session, drift_db.ParsedItem item})>>(
       key: const ValueKey('inboxEntry'),
-      stream: db.watchInboxItems(),
+      stream: db.watchInboxGroupedBySession(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        final items = snapshot.data ?? const <drift_db.ParsedItem>[];
-        if (items.isEmpty) {
+        final rows = snapshot.data ?? const [];
+        if (rows.isEmpty) {
           return _EmptyInbox(scheme: scheme, db: db);
         }
+
+        // Group by session preserving newest-first order from the SQL ORDER BY.
+        final LinkedHashMap<String, _CaptureGroup> groups =
+            LinkedHashMap<String, _CaptureGroup>();
+        for (final row in rows) {
+          final g = groups.putIfAbsent(
+            row.session.id,
+            () => _CaptureGroup(session: row.session, items: []),
+          );
+          g.items.add(row.item);
+        }
+        final groupList = groups.values.toList();
+        final totalItems = rows.length;
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _InboxHeader(count: items.length, db: db, items: items),
+            _InboxHeader(
+              totalItems: totalItems,
+              captureCount: groupList.length,
+              db: db,
+              groups: groupList,
+            ),
             const SizedBox(height: 12),
             Expanded(
               child: ListView.separated(
-                itemCount: items.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, index) => _InboxItemCard(
-                  item: items[index],
+                itemCount: groupList.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 16),
+                itemBuilder: (context, index) => _CaptureGroupSection(
+                  group: groupList[index],
                   db: db,
                 ),
               ),
@@ -50,6 +72,168 @@ class InboxSection extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+class _CaptureGroup {
+  _CaptureGroup({required this.session, required this.items});
+  final drift_db.CaptureSession session;
+  final List<drift_db.ParsedItem> items;
+}
+
+/// One scan's worth of items, with a header showing when it was captured and
+/// per-capture bulk actions (Accept all in this scan / Dismiss this scan).
+class _CaptureGroupSection extends StatefulWidget {
+  const _CaptureGroupSection({required this.group, required this.db});
+  final _CaptureGroup group;
+  final DbHelper db;
+
+  @override
+  State<_CaptureGroupSection> createState() => _CaptureGroupSectionState();
+}
+
+class _CaptureGroupSectionState extends State<_CaptureGroupSection> {
+  bool _busy = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: scheme.outline.withValues(alpha: 0.15)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildGroupHeader(scheme),
+          const Divider(height: 1),
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              children: [
+                for (int i = 0; i < widget.group.items.length; i++) ...[
+                  if (i > 0) const SizedBox(height: 10),
+                  _InboxItemCard(item: widget.group.items[i], db: widget.db),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGroupHeader(ColorScheme scheme) {
+    final captured = widget.group.session.capturedAt.toLocal();
+    final count = widget.group.items.length;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
+      child: Row(
+        children: [
+          Icon(Icons.photo_camera_outlined, size: 18, color: scheme.primary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _friendlyDate(captured),
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: scheme.onSurface,
+                      ),
+                ),
+                Text(
+                  '$count item${count == 1 ? '' : 's'} · captured ${DateFormat('h:mm a').format(captured)}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: _busy ? null : _acceptAllInGroup,
+            child: const Text('Accept all'),
+          ),
+          IconButton(
+            tooltip: 'Dismiss this capture',
+            icon: Icon(Icons.delete_sweep_outlined,
+                size: 20, color: scheme.error.withValues(alpha: 0.8)),
+            onPressed: _busy ? null : _rejectAllInGroup,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Formats a capture timestamp as "Today", "Yesterday", weekday name for
+  /// the last week, otherwise a short date.
+  String _friendlyDate(DateTime captured) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final capDay =
+        DateTime(captured.year, captured.month, captured.day);
+    final diff = today.difference(capDay).inDays;
+    if (diff == 0) return 'Today';
+    if (diff == 1) return 'Yesterday';
+    if (diff > 1 && diff < 7) return DateFormat('EEEE').format(captured);
+    return DateFormat('MMM d, yyyy').format(captured);
+  }
+
+  Future<void> _acceptAllInGroup() async {
+    setState(() => _busy = true);
+    final home = Get.find<HomeController>();
+    final projects = home.projects.toList();
+    for (final item in widget.group.items) {
+      final project = _resolveProject(item.parentProject, projects);
+      final task = _parsedItemToTaskModel(item, project);
+      await widget.db.insert(task);
+      await widget.db.markInboxItemPromoted(item.id, task.key!);
+    }
+    try {
+      home.getTasks();
+    } catch (_) {}
+    if (!mounted) return;
+    setState(() => _busy = false);
+    Utils.showSnackBar(
+      'Promoted',
+      'Accepted ${widget.group.items.length} item${widget.group.items.length == 1 ? '' : 's'} from this capture',
+      const Icon(Icons.done_all, color: Colors.white),
+    );
+  }
+
+  Future<void> _rejectAllInGroup() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Dismiss capture?'),
+        content: Text(
+            'This will reject all ${widget.group.items.length} pending items from this capture. The original scan stays in history but the parsed items go away.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+            ),
+            child: const Text('Dismiss'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    setState(() => _busy = true);
+    for (final item in widget.group.items) {
+      await widget.db.rejectInboxItem(item.id);
+    }
+    if (!mounted) return;
+    setState(() => _busy = false);
   }
 }
 
@@ -106,91 +290,145 @@ class _EmptyInbox extends StatelessWidget {
   }
 }
 
-/// Inserts a synthetic paper2todo payload so the Accept/Reject flow can be
-/// exercised without two physical devices wired together. Only compiled in
-/// debug builds.
+/// Inserts a pair of synthetic paper2todo captures dated today + yesterday
+/// so the grouping UI can be exercised without two physical devices wired
+/// together. Only compiled in debug builds.
 Future<void> _injectTestCapture(BuildContext context, DbHelper db) async {
   final now = DateTime.now();
-  final sessionId = 'debug-${now.microsecondsSinceEpoch}';
-  final tomorrow = now.add(const Duration(days: 1));
-  String fmt(DateTime d) =>
-      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-
-  final payload = Paper2TodoPayload(
-    sessionId: sessionId,
+  await _injectOneCapture(
+    db,
     capturedAt: now,
-    items: <Paper2TodoItem>[
-      // High-confidence, AI-suggested project that doesn't exist yet — the
-      // card should show the "AI suggested: Kitchen Reno" chip with [Use it].
-      Paper2TodoItem(
-        id: '$sessionId-1',
-        type: 'task',
-        content: 'Buy bathroom tiles',
-        tags: ['errands', 'shopping'],
-        dueDate: fmt(tomorrow),
-        dueTime: '14:00',
-        priority: 'medium',
-        location: 'Home Depot',
-        parentProject: 'Kitchen Reno',
-        status: 'pending',
-        confidence: 0.92,
-        note: 'Get the matte finish',
-      ),
-      // Medium confidence, no project guess — dropdown defaults to Inbox.
-      Paper2TodoItem(
-        id: '$sessionId-2',
-        type: 'task',
-        content: 'Call contractor about countertops',
-        tags: ['phone'],
-        priority: 'high',
-        parentProject: null,
-        status: 'pending',
-        confidence: 0.78,
-      ),
-      // Low confidence, deferred — exercises the red confidence badge.
-      Paper2TodoItem(
-        id: '$sessionId-3',
-        type: 'task',
-        content: 'Look into smart oven options',
-        tags: const [],
-        priority: 'low',
-        parentProject: 'Kitchen Reno',
-        status: 'deferred',
-        confidence: 0.55,
-      ),
-      // Subtask under the same project.
-      Paper2TodoItem(
-        id: '$sessionId-4',
-        type: 'subtask',
-        content: 'Ask about warranty terms',
-        tags: const [],
-        priority: 'none',
-        parentProject: 'Kitchen Reno',
-        status: 'pending',
-        confidence: 0.88,
-      ),
-    ],
+    suffix: '-today',
+    items: _todayItems(now),
   );
-
-  await db.insertPaper2TodoCapture(payload);
+  await _injectOneCapture(
+    db,
+    capturedAt: now.subtract(const Duration(days: 1, hours: 3)),
+    suffix: '-yesterday',
+    items: _yesterdayItems(now),
+  );
   if (!context.mounted) return;
   Utils.showSnackBar(
     'Injected',
-    'Added a synthetic Paper2Todo capture with ${payload.items.length} items',
+    'Added two synthetic captures (today + yesterday)',
     const Icon(Icons.science_outlined, color: Colors.white),
   );
 }
 
+Future<void> _injectOneCapture(
+  DbHelper db, {
+  required DateTime capturedAt,
+  required String suffix,
+  required List<Paper2TodoItem> items,
+}) async {
+  final sessionId = 'debug-${DateTime.now().microsecondsSinceEpoch}$suffix';
+  // Re-key items to the new session so they're unique even across multiple
+  // inject taps.
+  final reKeyed = items
+      .asMap()
+      .entries
+      .map((e) => Paper2TodoItem(
+            id: '$sessionId-${e.key}',
+            type: e.value.type,
+            content: e.value.content,
+            tags: e.value.tags,
+            dueDate: e.value.dueDate,
+            dueTime: e.value.dueTime,
+            priority: e.value.priority,
+            location: e.value.location,
+            parentProject: e.value.parentProject,
+            status: e.value.status,
+            confidence: e.value.confidence,
+            note: e.value.note,
+          ))
+      .toList();
+  final payload = Paper2TodoPayload(
+    sessionId: sessionId,
+    capturedAt: capturedAt,
+    items: reKeyed,
+  );
+  await db.insertPaper2TodoCapture(payload);
+}
+
+String _isoDate(DateTime d) =>
+    '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+List<Paper2TodoItem> _todayItems(DateTime now) {
+  final tomorrow = now.add(const Duration(days: 1));
+  return <Paper2TodoItem>[
+    Paper2TodoItem(
+      id: '',
+      type: 'task',
+      content: 'Buy bathroom tiles',
+      tags: const ['errands', 'shopping'],
+      dueDate: _isoDate(tomorrow),
+      dueTime: '14:00',
+      priority: 'medium',
+      location: 'Home Depot',
+      parentProject: 'Kitchen Reno',
+      status: 'pending',
+      confidence: 0.92,
+      note: 'Get the matte finish',
+    ),
+    Paper2TodoItem(
+      id: '',
+      type: 'task',
+      content: 'Call contractor about countertops',
+      tags: const ['phone'],
+      priority: 'high',
+      status: 'pending',
+      confidence: 0.78,
+    ),
+    Paper2TodoItem(
+      id: '',
+      type: 'subtask',
+      content: 'Ask about warranty terms',
+      tags: const [],
+      priority: 'none',
+      parentProject: 'Kitchen Reno',
+      status: 'pending',
+      confidence: 0.88,
+    ),
+  ];
+}
+
+List<Paper2TodoItem> _yesterdayItems(DateTime now) {
+  return <Paper2TodoItem>[
+    Paper2TodoItem(
+      id: '',
+      type: 'task',
+      content: 'Email Sarah re: Q3 budget',
+      tags: const ['work', 'email'],
+      priority: 'high',
+      parentProject: 'Work',
+      status: 'pending',
+      confidence: 0.94,
+    ),
+    Paper2TodoItem(
+      id: '',
+      type: 'task',
+      content: 'Pick up dry cleaning',
+      tags: const ['errands'],
+      dueDate: _isoDate(now),
+      priority: 'low',
+      status: 'pending',
+      confidence: 0.71,
+    ),
+  ];
+}
+
 class _InboxHeader extends StatefulWidget {
   const _InboxHeader({
-    required this.count,
+    required this.totalItems,
+    required this.captureCount,
     required this.db,
-    required this.items,
+    required this.groups,
   });
 
-  final int count;
+  final int totalItems;
+  final int captureCount;
   final DbHelper db;
-  final List<drift_db.ParsedItem> items;
+  final List<_CaptureGroup> groups;
 
   @override
   State<_InboxHeader> createState() => _InboxHeaderState();
@@ -202,49 +440,65 @@ class _InboxHeaderState extends State<_InboxHeader> {
   @override
   Widget build(BuildContext context) {
     final ColorScheme scheme = Theme.of(context).colorScheme;
+    final captureLabel =
+        widget.captureCount == 1 ? '1 capture' : '${widget.captureCount} captures';
     return Row(
       children: [
         Icon(Icons.move_to_inbox, color: scheme.primary, size: 22),
         const SizedBox(width: 8),
         Expanded(
-          child: Text(
-            '${widget.count} pending',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: scheme.onSurface,
-                ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${widget.totalItems} pending',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: scheme.onSurface,
+                    ),
+              ),
+              Text(
+                'across $captureLabel',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+              ),
+            ],
           ),
         ),
-        TextButton.icon(
-          onPressed: _busy ? null : _acceptAll,
-          icon: _busy
-              ? SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: scheme.primary,
-                  ),
-                )
-              : const Icon(Icons.done_all, size: 18),
-          label: const Text('Accept all'),
-        ),
+        if (widget.captureCount > 1)
+          TextButton.icon(
+            onPressed: _busy ? null : _acceptEverything,
+            icon: _busy
+                ? SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: scheme.primary,
+                    ),
+                  )
+                : const Icon(Icons.done_all, size: 18),
+            label: const Text('Accept all'),
+          ),
       ],
     );
   }
 
-  Future<void> _acceptAll() async {
+  Future<void> _acceptEverything() async {
     setState(() => _busy = true);
     final HomeController home = Get.find<HomeController>();
     final projects = home.projects.toList();
 
     int promoted = 0;
-    for (final item in widget.items) {
-      final project = _resolveProject(item.parentProject, projects);
-      final task = _parsedItemToTaskModel(item, project);
-      await widget.db.insert(task);
-      await widget.db.markInboxItemPromoted(item.id, task.key!);
-      promoted++;
+    for (final group in widget.groups) {
+      for (final item in group.items) {
+        final project = _resolveProject(item.parentProject, projects);
+        final task = _parsedItemToTaskModel(item, project);
+        await widget.db.insert(task);
+        await widget.db.markInboxItemPromoted(item.id, task.key!);
+        promoted++;
+      }
     }
 
     try {

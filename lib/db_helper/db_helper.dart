@@ -147,6 +147,14 @@ class DbHelper {
     return _database.select(_database.captureSessions).watch();
   }
 
+  /// Streams pending items joined with their capture session, ordered
+  /// newest-capture-first. The UI groups these by `sessionId` so missed-day
+  /// captures stay distinct from today's.
+  Stream<List<({CaptureSession session, ParsedItem item})>>
+      watchInboxGroupedBySession() {
+    return _database.watchPendingInboxJoined();
+  }
+
   /// Reject a single inbox item without promoting it.
   Future<int> rejectInboxItem(String id) {
     return _parsedItemDao.deleteItem(id);

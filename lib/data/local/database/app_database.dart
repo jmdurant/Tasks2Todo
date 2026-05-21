@@ -82,6 +82,31 @@ class AppDatabase extends _$AppDatabase {
 
   AppDatabase.forTesting(super.e);
 
+  /// Joins ParsedItems → CaptureSessions for the Inbox view. Emits one row
+  /// per pending (externalId IS NULL) parsed item, ordered newest capture
+  /// first. The UI groups by sessionId.
+  Stream<List<({CaptureSession session, ParsedItem item})>>
+      watchPendingInboxJoined() {
+    final query = (select(parsedItems).join([
+      innerJoin(
+        captureSessions,
+        captureSessions.id.equalsExp(parsedItems.sessionId),
+      ),
+    ])
+      ..where(parsedItems.externalId.isNull())
+      ..orderBy([
+        OrderingTerm.desc(captureSessions.capturedAt),
+      ]));
+    return query.watch().map((rows) {
+      return rows
+          .map((row) => (
+                session: row.readTable(captureSessions),
+                item: row.readTable(parsedItems),
+              ))
+          .toList();
+    });
+  }
+
   @override
   int get schemaVersion => 5;
 
