@@ -16,6 +16,8 @@ class TaskModel {
   String? recurrence; // 'none', 'daily', 'weekly', 'monthly'
   int? reminderMinutesBefore; // -1 = no reminder, 0 = at time, 15 = 15 min before, etc.
   int? notificationId; // Stable 31-bit id used to schedule/cancel the reminder.
+  int? updatedAt; // Epoch millis of last mutation (Firebase sync LWW key).
+  bool deleted; // Soft-delete tombstone.
 
   TaskModel({
     required this.key,
@@ -33,9 +35,12 @@ class TaskModel {
     this.recurrence = 'none',
     this.reminderMinutesBefore = -1,
     this.notificationId,
+    this.updatedAt,
+    this.deleted = false,
   });
 
-  TaskModel.fromMap(Map<String, dynamic> res) {
+  TaskModel.fromMap(Map<String, dynamic> res)
+      : deleted = res['deleted'] == true || res['deleted'] == 1 {
     key = res['key'];
     title = res['title'];
     category = res['category'];
@@ -51,6 +56,7 @@ class TaskModel {
     recurrence = res['recurrence'] ?? 'none';
     reminderMinutesBefore = res['reminderMinutesBefore'] ?? -1;
     notificationId = res['notificationId'];
+    updatedAt = res['updatedAt'];
   }
 
   Map<String, Object?> toMap() {
@@ -70,6 +76,8 @@ class TaskModel {
       'recurrence': recurrence,
       'reminderMinutesBefore': reminderMinutesBefore,
       'notificationId': notificationId,
+      'updatedAt': updatedAt,
+      'deleted': deleted,
     };
   }
 
@@ -89,6 +97,8 @@ class TaskModel {
     String? recurrence,
     int? reminderMinutesBefore,
     int? notificationId,
+    int? updatedAt,
+    bool? deleted,
   }) {
     return TaskModel(
       key: key ?? this.key,
@@ -106,8 +116,16 @@ class TaskModel {
       recurrence: recurrence ?? this.recurrence,
       reminderMinutesBefore: reminderMinutesBefore ?? this.reminderMinutesBefore,
       notificationId: notificationId ?? this.notificationId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deleted: deleted ?? this.deleted,
     );
   }
+
+  /// Serialize for Firebase RTDB. Booleans/ints map cleanly to JSON.
+  Map<String, Object?> toSyncJson() => toMap();
+
+  factory TaskModel.fromSyncJson(Map<String, dynamic> json) =>
+      TaskModel.fromMap(json);
 
   /// Helper to get tags as a list
   List<String> get tagList =>

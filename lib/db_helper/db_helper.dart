@@ -100,6 +100,19 @@ class DbHelper {
     return _taskDao.getTasksWithReminders();
   }
 
+  // ─── Firebase sync ─────────────────────────────────────────────────────
+
+  /// All rows including tombstones — the push side of sync.
+  Future<List<TaskModel>> getAllTasksForSync() {
+    return _taskDao.getAllTasksForSync();
+  }
+
+  /// Apply a row pulled from the cloud (last-write-wins). Returns true if the
+  /// local row actually changed.
+  Future<bool> applyRemoteTask(TaskModel remote) {
+    return _taskDao.applyRemoteTask(remote);
+  }
+
   // ─── Paper2Todo Inbox ──────────────────────────────────────────────────
 
   /// Persist a paper2todo capture payload into the local CaptureSessions /

@@ -25,6 +25,12 @@ class Tasks extends Table {
   IntColumn get reminderMinutesBefore => integer().withDefault(const Constant(-1))();
   // Stable 31-bit notification id; 0 means "not scheduled yet".
   IntColumn get notificationId => integer().withDefault(const Constant(0))();
+  // Epoch millis of the last local mutation. Conflict-resolution key for
+  // Firebase sync (last-write-wins).
+  IntColumn get updatedAt => integer().withDefault(const Constant(0))();
+  // Soft-delete tombstone. UI queries filter deleted rows out; sync pushes
+  // the tombstone so other devices delete too (and don't resurrect the row).
+  BoolColumn get deleted => boolean().withDefault(const Constant(false))();
 
   @override
   Set<Column> get primaryKey => {key};
@@ -108,7 +114,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -152,6 +158,14 @@ class AppDatabase extends _$AppDatabase {
             // a recent build, so this is safe.
             await customStatement("ALTER TABLE tasks DROP COLUMN periority");
           }
+          if (from < 6) {
+            await m.addColumn(tasks, tasks.updatedAt);
+            await m.addColumn(tasks, tasks.deleted);
+            // Stamp existing rows so they have a baseline updatedAt and push
+            // to the cloud on first sync.
+            await customStatement(
+                "UPDATE tasks SET updated_at = ${DateTime.now().millisecondsSinceEpoch}");
+          }
         },
       );
 }
@@ -180,8 +194,12 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
         recurrence: row.recurrence,
         reminderMinutesBefore: row.reminderMinutesBefore,
         notificationId: row.notificationId,
+        updatedAt: row.updatedAt,
+        deleted: row.deleted,
       );
 
+  /// Local create/update — always stamps a fresh updatedAt and clears the
+  /// tombstone (a local write means the row is live again).
   Future<void> insertTask(TaskModel model) {
     final int notifId = model.notificationId == null || model.notificationId == 0
         ? _stableNotificationId(model.key!)
@@ -203,8 +221,52 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
         recurrence: Value(model.recurrence ?? 'none'),
         reminderMinutesBefore: Value(model.reminderMinutesBefore ?? -1),
         notificationId: Value(notifId),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+        deleted: const Value(false),
       ),
     );
+  }
+
+  /// Applies a row pulled from the cloud, preserving its remote updatedAt and
+  /// deleted flag. Last-write-wins: skips the write if the local row is newer
+  /// or equal. Returns true if the local row changed.
+  Future<bool> applyRemoteTask(TaskModel remote) async {
+    final existing = await (select(tasks)
+          ..where((t) => t.key.equals(remote.key!)))
+        .getSingleOrNull();
+    final remoteTs = remote.updatedAt ?? 0;
+    if (existing != null && existing.updatedAt >= remoteTs) {
+      return false; // local is newer or same — ignore remote
+    }
+    await into(tasks).insertOnConflictUpdate(
+      TasksCompanion(
+        key: Value(remote.key!),
+        title: Value(remote.title ?? ''),
+        category: Value(remote.category ?? 'Inbox'),
+        description: Value(remote.description ?? ''),
+        image: Value(remote.image ?? ''),
+        priority: Value(remote.priority ?? 'Low'),
+        startTime: Value(remote.startTime ?? ''),
+        endTime: Value(remote.endTime ?? ''),
+        date: Value(remote.date ?? ''),
+        show: Value(remote.show ?? 'yes'),
+        status: Value(remote.status ?? 'unComplete'),
+        tags: Value(remote.tags ?? ''),
+        recurrence: Value(remote.recurrence ?? 'none'),
+        reminderMinutesBefore: Value(remote.reminderMinutesBefore ?? -1),
+        notificationId: Value(remote.notificationId ??
+            _stableNotificationId(remote.key!)),
+        updatedAt: Value(remoteTs),
+        deleted: Value(remote.deleted),
+      ),
+    );
+    return true;
+  }
+
+  /// Every row including tombstones — used by the sync push.
+  Future<List<TaskModel>> getAllTasksForSync() async {
+    final rows = await select(tasks).get();
+    return rows.map(_rowToModel).toList();
   }
 
   /// Derives a deterministic 31-bit notification id from the task key.
@@ -241,6 +303,8 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
             recurrence: Value(m.recurrence ?? 'none'),
             reminderMinutesBefore: Value(m.reminderMinutesBefore ?? -1),
             notificationId: Value(notifId),
+            updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+            deleted: const Value(false),
           );
         }).toList(),
       );
@@ -248,18 +312,27 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
   }
 
   Future<List<TaskModel>> getAllTasks() async {
-    final List<Task> rows = await select(tasks).get();
+    final List<Task> rows =
+        await (select(tasks)..where((t) => t.deleted.equals(false))).get();
     return rows.map(_rowToModel).toList();
   }
 
+  /// Soft delete: stamp a tombstone + fresh updatedAt so the deletion syncs
+  /// to other devices instead of being resurrected by their next push.
   Future<int> deleteTask(String keyValue) {
-    return (delete(tasks)..where((tbl) => tbl.key.equals(keyValue))).go();
+    return (update(tasks)..where((tbl) => tbl.key.equals(keyValue))).write(
+      TasksCompanion(
+        deleted: const Value(true),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
+    );
   }
 
   Future<int> updateTaskStatus(String keyValue, String statusValue) {
     return (update(tasks)..where((tbl) => tbl.key.equals(keyValue))).write(
       TasksCompanion(
         status: Value(statusValue),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
       ),
     );
   }
@@ -267,7 +340,7 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
   /// Get tasks for a list of date strings (e.g., ["03/01/2026", "04/01/2026", ...])
   Future<List<TaskModel>> getTasksForDates(List<String> dates) async {
     final List<Task> rows = await (select(tasks)
-          ..where((tbl) => tbl.date.isIn(dates)))
+          ..where((tbl) => tbl.date.isIn(dates) & tbl.deleted.equals(false)))
         .get();
     return rows.map(_rowToModel).toList();
   }
@@ -275,14 +348,16 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
   /// Get tasks for a specific project/category
   Future<List<TaskModel>> getTasksForProject(String projectName) async {
     final List<Task> rows = await (select(tasks)
-          ..where((tbl) => tbl.category.equals(projectName)))
+          ..where((tbl) =>
+              tbl.category.equals(projectName) & tbl.deleted.equals(false)))
         .get();
     return rows.map(_rowToModel).toList();
   }
 
   /// Get all tasks grouped by project/category
   Future<Map<String, List<TaskModel>>> getAllTasksGroupedByProject() async {
-    final List<Task> rows = await select(tasks).get();
+    final List<Task> rows =
+        await (select(tasks)..where((t) => t.deleted.equals(false))).get();
     final Map<String, List<TaskModel>> grouped = {};
     for (final row in rows) {
       (grouped[row.category] ??= []).add(_rowToModel(row));
@@ -294,7 +369,9 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
   /// whenever any task row changes, so views can rebuild without manually
   /// refreshing.
   Stream<Map<String, List<TaskModel>>> watchAllTasksGroupedByProject() {
-    return select(tasks).watch().map((rows) {
+    return (select(tasks)..where((t) => t.deleted.equals(false)))
+        .watch()
+        .map((rows) {
       final Map<String, List<TaskModel>> grouped = {};
       for (final row in rows) {
         (grouped[row.category] ??= []).add(_rowToModel(row));
@@ -307,14 +384,16 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
   Future<int> countTasksForProject(String projectName) async {
     final query = selectOnly(tasks)
       ..addColumns([tasks.key.count()])
-      ..where(tasks.category.equals(projectName));
+      ..where(tasks.category.equals(projectName) & tasks.deleted.equals(false));
     final result = await query.getSingle();
     return result.read(tasks.key.count()) ?? 0;
   }
 
   /// Stream of task counts by project
   Stream<Map<String, int>> watchTaskCountsByProject() {
-    return select(tasks).watch().map((rows) {
+    return (select(tasks)..where((t) => t.deleted.equals(false)))
+        .watch()
+        .map((rows) {
       final counts = <String, int>{};
       for (final row in rows) {
         counts[row.category] = (counts[row.category] ?? 0) + 1;
@@ -328,10 +407,11 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
     final pattern = '%$query%';
     final List<Task> rows = await (select(tasks)
           ..where((tbl) =>
-              tbl.title.like(pattern) |
-              tbl.description.like(pattern) |
-              tbl.category.like(pattern) |
-              tbl.tags.like(pattern)))
+              (tbl.title.like(pattern) |
+                  tbl.description.like(pattern) |
+                  tbl.category.like(pattern) |
+                  tbl.tags.like(pattern)) &
+              tbl.deleted.equals(false)))
         .get();
     return rows.map(_rowToModel).toList();
   }
@@ -341,7 +421,8 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
     final List<Task> rows = await (select(tasks)
           ..where((tbl) =>
               tbl.reminderMinutesBefore.isBiggerOrEqualValue(0) &
-              tbl.status.equals('unComplete')))
+              tbl.status.equals('unComplete') &
+              tbl.deleted.equals(false)))
         .get();
     return rows.map(_rowToModel).toList();
   }
